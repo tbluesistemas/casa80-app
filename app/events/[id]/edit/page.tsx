@@ -1,10 +1,10 @@
-import { getEventById } from "@/lib/actions";
-import { ReturnForm } from "@/components/return-form";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getEventById } from "@/lib/actions"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { EditEventForm } from "@/components/edit-event-form"
 
-export default async function ReturnPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
-    const { success, data: event, error } = await getEventById(id);
+    const { success, data: event, error } = await getEventById(id)
 
     if (!success || !event) {
         return (
@@ -20,9 +20,9 @@ export default async function ReturnPage({ params }: { params: Promise<{ id: str
     return (
         <div className="flex-1 space-y-8 p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Gestionar Devolución</h2>
+                <h2 className="text-3xl font-bold tracking-tight">Editar Reserva</h2>
             </div>
-            <ReturnForm event={event as any} />
+            <EditEventForm event={event as any} />
         </div>
-    );
+    )
 }

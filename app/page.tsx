@@ -3,135 +3,165 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Package, RotateCcw, TrendingUp } from "lucide-react";
 import { SeedButton } from "@/components/seed-button";
+import styles from "./home.module.css";
+import { getDashboardStats } from "@/lib/actions";
 
-export default function Home() {
-  return (
-    <div className="flex-1 space-y-8 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <div className="flex items-center space-x-2">
-          <SeedButton />
+export default async function Home() {
+    const stats = await getDashboardStats();
+    const data = stats.success && stats.data ? stats.data : {
+        activeReservations: 0,
+        totalInventory: 0,
+        inventoryValue: 0,
+        pendingReturns: 0,
+        recentEvents: []
+    };
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+    }
+
+    const formatDate = (date: Date) => {
+        return new Intl.DateTimeFormat('es-MX', {
+            weekday: 'long',
+            hour: 'numeric',
+            minute: 'numeric',
+            day: 'numeric',
+            month: 'short'
+        }).format(new Date(date));
+    }
+
+    return (
+        <div className="flex-1 space-y-8 p-8 pt-6">
+            <div className="flex items-center justify-between space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            </div>
+
+            <div className={styles.statsGrid}>
+                <Link href="/events" className="block">
+                    <Card className={styles.clickableCard}>
+                        <CardHeader className={styles.cardHeader}>
+                            <CardTitle className={styles.cardTitle}>
+                                Reservas Activas
+                            </CardTitle>
+                            <CalendarDays className={styles.icon} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className={styles.cardValue}>{data.activeReservations}</div>
+                            <p className={styles.cardSubtext}>
+                                Eventos en curso o programados
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                <Link href="/inventory" className="block">
+                    <Card className={styles.clickableCard}>
+                        <CardHeader className={styles.cardHeader}>
+                            <CardTitle className={styles.cardTitle}>
+                                Inventario Total
+                            </CardTitle>
+                            <Package className={styles.icon} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className={styles.cardValue}>{data.totalInventory}</div>
+                            <p className={styles.cardSubtext}>
+                                Items registrados
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                <Link href="/events" className="block">
+                    <Card className={styles.clickableCard}>
+                        <CardHeader className={styles.cardHeader}>
+                            <CardTitle className={styles.cardTitle}>Devoluciones Pendientes</CardTitle>
+                            <RotateCcw className={styles.icon} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className={styles.cardValue}>{data.pendingReturns}</div>
+                            <p className={styles.cardSubtext}>
+                                Eventos finalizados sin cerrar
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                <Link href="/inventory" className="block">
+                    <Card className={styles.clickableCard}>
+                        <CardHeader className={styles.cardHeader}>
+                            <CardTitle className={styles.cardTitle}>
+                                Valor del Inventario
+                            </CardTitle>
+                            <TrendingUp className={styles.icon} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className={styles.cardValue}>{formatCurrency(data.inventoryValue)}</div>
+                            <p className={styles.cardSubtext}>
+                                Costo total de reposición
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
+            </div>
+
+            <div className={styles.mainGrid}>
+                <Card className={styles.quickActionsCard}>
+                    <CardHeader>
+                        <CardTitle>Acciones Rápidas</CardTitle>
+                        <CardDescription>
+                            Gestiona el inventario y las reservas desde aquí.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className={styles.cardContentActions}>
+                        <div className={styles.actionsGrid}>
+                            <Link href="/events/new">
+                                <Button className={styles.actionButton} variant="outline">
+                                    <CalendarDays className={styles.actionIcon} />
+                                    Nueva Reserva
+                                </Button>
+                            </Link>
+                            <Link href="/inventory">
+                                <Button className={styles.actionButton} variant="outline">
+                                    <Package className={styles.actionIcon} />
+                                    Ver Inventario
+                                </Button>
+                            </Link>
+                            <Link href="/events">
+                                <Button className={styles.actionButton} variant="outline">
+                                    <RotateCcw className={styles.actionIcon} />
+                                    Gestionar Devoluciones
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className={styles.eventsCard}>
+                    <CardHeader>
+                        <Link href="/events" className="hover:underline">
+                            <CardTitle>Próximos Eventos &rarr;</CardTitle>
+                        </Link>
+                        <CardDescription>Eventos programados próximamente.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className={styles.eventsList}>
+                            {data.recentEvents.length === 0 ? (
+                                <p className="text-muted-foreground text-sm">No hay eventos próximos.</p>
+                            ) : (
+                                data.recentEvents.map((event: any) => (
+                                    <Link key={event.id} href={`/events/${event.id}`}>
+                                        <div className={`${styles.eventItem} ${styles.clickableRow}`}>
+                                            <div className={styles.eventInfo}>
+                                                <p className={styles.eventName}>{event.name}</p>
+                                                <p className={styles.eventTime}>
+                                                    {formatDate(event.startDate)}
+                                                </p>
+                                            </div>
+                                            <div className={styles.eventStatus}>{event.status}</div>
+                                        </div>
+                                    </Link>
+                                ))
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Reservas Activas
-            </CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              +2 desde la semana pasada
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Inventario Total
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+500</div>
-            <p className="text-xs text-muted-foreground">
-              Items disponibles
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Devoluciones Pendientes</CardTitle>
-            <RotateCcw className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">
-              Requieren revisión
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Ingresos del Mes
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% respecto al mes pasado
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>
-              Gestiona el inventario y las reservas desde aquí.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Link href="/events/new">
-                <Button className="w-full h-24 text-lg flex flex-col gap-2" variant="outline">
-                  <CalendarDays className="h-6 w-6" />
-                  Nueva Reserva
-                </Button>
-              </Link>
-              <Link href="/inventory">
-                <Button className="w-full h-24 text-lg flex flex-col gap-2" variant="outline">
-                  <Package className="h-6 w-6" />
-                  Ver Inventario
-                </Button>
-              </Link>
-              <Link href="/events">
-                <Button className="w-full h-24 text-lg flex flex-col gap-2" variant="outline">
-                  <RotateCcw className="h-6 w-6" />
-                  Gestionar Devoluciones
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Próximos Eventos</CardTitle>
-            <CardDescription>Eventos programados para esta semana.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
-              {/* Placeholder for recent events */}
-              <div className="flex items-center">
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">Boda Gomez-Perez</p>
-                  <p className="text-sm text-muted-foreground">
-                    Mañana, 14:00 PM
-                  </p>
-                </div>
-                <div className="ml-auto font-medium">Activo</div>
-              </div>
-              <div className="flex items-center">
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">Cumpleaños XV</p>
-                  <p className="text-sm text-muted-foreground">
-                    Sábado, 18:00 PM
-                  </p>
-                </div>
-                <div className="ml-auto font-medium">Pendiente</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+    );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AppShell } from "@/components/app-shell";
+import styles from "./layout.module.css";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -13,9 +15,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from "@/components/mode-toggle";
+
 export const metadata: Metadata = {
-  title: "Casa80 - Gestión de Inventario",
-  description: "Sistema de gestión de reservas e inventario para Casa80",
+  title: "Casa80 App",
+  description: "Gestión de inventario y reservas",
 };
 
 export default function RootLayout({
@@ -24,14 +29,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${styles.body}`}
       >
-        <main className="min-h-screen flex flex-col">
-          {children}
-        </main>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AppShell>
+            {children}
+          </AppShell>
+          <div className="fixed bottom-10 right-6 z-50">
+            <ModeToggle />
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

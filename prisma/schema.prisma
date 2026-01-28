@@ -22,11 +22,14 @@ model User {
 model Product {
   id               String      @id @default(cuid())
   name             String
+  category         String?
   description      String?
   imageUrl         String?
   totalQuantity    Int         @default(0)
+  priceUnit        Float       @default(0.0)
   priceReplacement Float       @default(0.0)
   eventItems       EventItem[]
+  inventoryLogs    InventoryLog[]
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 }
@@ -37,9 +40,28 @@ model Event {
   startDate DateTime
   endDate   DateTime
   status    String      @default("BOOKED") // BOOKED, ACTIVE, COMPLETED, CANCELLED
+  notes     String?
   items     EventItem[]
+  clientId  String?
+  client    Client?     @relation(fields: [clientId], references: [id])
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  name         String
+  document     String?  // CC or NIT
+  email        String?
+  phone        String?
+  department   String?
+  city         String?
+  neighborhood String?
+  address      String?
+  notes        String?
+  events       Event[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model EventItem {
@@ -53,4 +75,17 @@ model EventItem {
   returnedDamaged Int    @default(0)
   
   @@unique([eventId, productId])
+}
+
+model InventoryLog {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  change      Int      // Positive for add, negative for sub
+  newTotal    Int      // Snapshot of total after change
+  type        String   // PURCHASE, ADJUSTMENT, RETURN, EVENT_USAGE
+  receivedBy  String?
+  verifiedBy  String?
+  notes       String?
+  createdAt   DateTime @default(now())
 }

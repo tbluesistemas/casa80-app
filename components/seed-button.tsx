@@ -3,6 +3,7 @@
 import { seedDatabase } from '@/lib/actions'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import styles from './seed-button.module.css'
 
 export function SeedButton() {
     const handleSeed = async () => {
@@ -16,7 +17,7 @@ export function SeedButton() {
     }
 
     return (
-        <Button variant="secondary" onClick={handleSeed}>
+        <Button variant="secondary" onClick={handleSeed} className={styles.button}>
             Poblar Base de Datos (Seed)
         </Button>
     )
