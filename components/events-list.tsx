@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Eye, RotateCcw, Pencil } from "lucide-react";
 import { getStatusLabel, getStatusColor } from "@/lib/utils-status";
+import type { UserRole } from "@/lib/auth";
 
 type Event = {
     id: string;
@@ -17,7 +18,7 @@ type Event = {
     status: string;
 };
 
-export function EventsList({ events }: { events: Event[] }) {
+export function EventsList({ events, role }: { events: Event[], role: UserRole }) {
     const [tab, setTab] = useState<'active' | 'history'>('active');
 
     const activeEvents = events.filter(e => ['BOOKED', 'ACTIVE'].includes(e.status));
@@ -72,7 +73,7 @@ export function EventsList({ events }: { events: Event[] }) {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        {event.status === 'BOOKED' && (
+                                        {role === 'ADMIN' && event.status === 'BOOKED' && (
                                             <>
                                                 <Link href={`/events/${event.id}/edit`}>
                                                     <Button variant="ghost" size="icon" title="Editar Reserva">

@@ -4,27 +4,32 @@ import { useState, useMemo, useEffect } from 'react'
 import { createEvent, CreateEventItem } from '@/lib/actions'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { CalendarIcon, Minus, Plus, Search, ShoppingCart } from 'lucide-react'
+import { CalendarIcon, Minus, Plus, Search, ShoppingCart, Package, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { ClientSelector } from '@/components/client-selector'
+import { useAuth } from '@/components/auth-provider'
 
 type Product = {
     id: string
     name: string
     totalQuantity: number
+    priceUnit?: number
 }
 
 // Internal type for easier state management
 type CartItems = { [key: string]: number }
 
 export function BookingForm({ products }: { products: Product[] }) {
+    const { role } = useAuth()
+
     // Form State
     const [name, setName] = useState('')
     const [clientId, setClientId] = useState<string | undefined>()
@@ -146,6 +151,22 @@ export function BookingForm({ products }: { products: Product[] }) {
     const selectedCount = Object.keys(cart).length
     const totalItems = Object.values(cart).reduce((a, b) => a + b, 0)
 
+    // Calculate cart items with prices
+    const cartItems = useMemo(() => {
+        return Object.entries(cart).map(([productId, quantity]) => {
+            const product = products.find(p => p.id === productId)
+            return {
+                product,
+                quantity,
+                subtotal: (product?.priceUnit || 0) * quantity
+            }
+        }).filter(item => item.product)
+    }, [cart, products])
+
+    const grandTotal = useMemo(() => {
+        return cartItems.reduce((sum, item) => sum + item.subtotal, 0)
+    }, [cartItems])
+
     return (
         <div className="flex h-[calc(100vh-140px)] gap-6">
             {/* LEFT COLUMN: Event Details */}
@@ -229,6 +250,44 @@ export function BookingForm({ products }: { products: Product[] }) {
                                 onChange={(e) => setNotes(e.target.value)}
                             />
                         </div>
+
+                        {/* Preview Section - Only for ADMIN */}
+                        {role === 'ADMIN' && cartItems.length > 0 && (
+                            <Card className="border-primary/20">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                        <Package className="h-4 w-4" />
+                                        Resumen de Reserva
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        {cartItems.map((item) => (
+                                            <div key={item.product!.id} className="flex justify-between items-center text-sm py-2 border-b last:border-0">
+                                                <div className="flex-1">
+                                                    <div className="font-medium">{item.product!.name}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {item.quantity} × ${(item.product!.priceUnit || 0).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                                <div className="font-semibold">
+                                                    ${item.subtotal.toLocaleString()}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-between items-center pt-3 border-t-2 border-primary/20">
+                                        <div className="flex items-center gap-2 font-semibold text-lg">
+                                            <DollarSign className="h-5 w-5 text-primary" />
+                                            Total
+                                        </div>
+                                        <div className="text-2xl font-bold text-primary">
+                                            ${grandTotal.toLocaleString()}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         <div className="pt-4">
                             <Button className="w-full h-12 text-lg" onClick={handleSubmit} disabled={isSubmitting}>

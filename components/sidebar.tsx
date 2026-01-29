@@ -4,16 +4,31 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Home, Package, PlusCircle } from "lucide-react";
+import { CalendarDays, Home, Package, PlusCircle, Users, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react"; // Assuming we use client-side signOut or server action
+import { useRouter } from "next/navigation";
+
+// Since signOut from next-auth/react is for client side, we need to wrap it or use a server action. 
+// But simple way: use window.location or server action.
+// Actually, standard way is import { signOut } from "next-auth/react" for client components.
+// sidebar is 'use client'.
+
+import { signOut as nextAuthSignOut } from "next-auth/react";
+import { useAuth } from "@/components/auth-provider";
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { role } = useAuth(); // Get current role
 
     const links = [
         { href: "/", label: "Inicio", icon: Home },
         { href: "/events", label: "Reservas", icon: CalendarDays },
         { href: "/inventory", label: "Inventario", icon: Package },
     ];
+
+    if (role === 'ADMIN') {
+        links.push({ href: "/admin/users", label: "Usuarios", icon: Users });
+    }
 
     return (
         <div className="flex h-full w-64 flex-col border-r bg-background">
@@ -41,13 +56,23 @@ export function Sidebar() {
                     })}
                 </nav>
             </div>
-            <div className="border-t p-4 flex gap-2">
-                <Link href="/events/new" className="flex-1">
-                    <Button className="w-full justify-start gap-2" variant="default">
-                        <PlusCircle className="h-4 w-4" />
-                        Nueva Reserva
-                    </Button>
-                </Link>
+            <div className="border-t p-4 flex flex-col gap-2">
+                {role === 'ADMIN' && (
+                    <Link href="/events/new">
+                        <Button className="w-full justify-start gap-2" variant="default">
+                            <PlusCircle className="h-4 w-4" />
+                            Nueva Reserva
+                        </Button>
+                    </Link>
+                )}
+                <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                    onClick={() => nextAuthSignOut({ callbackUrl: '/login' })}
+                >
+                    <LogOut className="h-4 w-4" />
+                    Cerrar Sesión
+                </Button>
             </div>
         </div>
     );

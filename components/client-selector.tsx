@@ -30,6 +30,8 @@ import { cn } from '@/lib/utils'
 import { getClients, createClient } from '@/lib/actions'
 import { toast } from 'sonner'
 import { COLOMBIA_DATA, DEPARTAMENTOS } from "@/lib/colombia-data"
+import { useAuth } from '@/components/auth-provider'
+import { maskPhone, maskEmail, maskDocument } from '@/lib/permissions'
 
 type Client = {
     id: string
@@ -71,6 +73,14 @@ export function ClientSelector({ onSelect, selectedClient }: ClientSelectorProps
     const [showCreateDialog, setShowCreateDialog] = React.useState(false)
     const [newClient, setNewClient] = React.useState(INITIAL_CLIENT_STATE)
 
+    const { role } = useAuth() // Get current role
+
+    // Expanded Address State
+    const [neighborhoodType, setNeighborhoodType] = React.useState('Barrio')
+    const [neighborhoodName, setNeighborhoodName] = React.useState('')
+    const [addressType, setAddressType] = React.useState('Casa')
+    const [addressDetail, setAddressDetail] = React.useState('')
+
     // Debounce search
     React.useEffect(() => {
         const timer = setTimeout(() => {
@@ -93,25 +103,36 @@ export function ClientSelector({ onSelect, selectedClient }: ClientSelectorProps
     }
 
     const handleSaveClient = async () => {
-        // Validation for required fields (excluding notes)
-        const requiredFields = [
-            { key: 'name', label: 'Nombre / Razón Social' },
-            { key: 'document', label: 'CC / NIT' },
-            { key: 'email', label: 'Correo' },
-            { key: 'phone', label: 'Teléfono / Celular' },
-            { key: 'department', label: 'Departamento' },
-            { key: 'city', label: 'Ciudad' },
-            { key: 'neighborhood', label: 'Barrio' },
-            { key: 'address', label: 'Dirección' }
-        ] as const
+        // Construct final strings
+        const finalNeighborhood = `${neighborhoodType} ${neighborhoodName}`.trim()
+        const finalAddress = `${addressType} ${addressDetail}`.trim()
 
-        for (const field of requiredFields) {
-            if (!newClient[field.key as keyof typeof newClient] || !newClient[field.key as keyof typeof newClient]?.toString().trim()) {
+        // Validation
+        const requiredCheck = [
+            { val: newClient.name, label: 'Nombre / Razón Social' },
+            { val: newClient.document, label: 'CC / NIT' },
+            { val: newClient.email, label: 'Correo' },
+            { val: newClient.phone, label: 'Teléfono / Celular' },
+            { val: newClient.department, label: 'Departamento' },
+            { val: newClient.city, label: 'Ciudad' },
+            // Check composite fields
+            { val: neighborhoodName, label: 'Nombre del Barrio/Vereda' },
+            { val: addressDetail, label: 'Detalle de Dirección' }
+        ]
+
+        for (const field of requiredCheck) {
+            if (!field.val || !field.val.toString().trim()) {
                 return toast.error(`El campo "${field.label}" es obligatorio`)
             }
         }
 
-        const promise = createClient(newClient)
+        const clientData = {
+            ...newClient,
+            neighborhood: finalNeighborhood,
+            address: finalAddress
+        }
+
+        const promise = createClient(clientData)
 
         toast.promise(promise, {
             loading: 'Guardando cliente...',
@@ -122,6 +143,10 @@ export function ClientSelector({ onSelect, selectedClient }: ClientSelectorProps
                     setShowCreateDialog(false)
                     // Reset form
                     setNewClient(INITIAL_CLIENT_STATE)
+                    setNeighborhoodType('Barrio')
+                    setNeighborhoodName('')
+                    setAddressType('Casa')
+                    setAddressDetail('')
                     return `Cliente "${res.data.name}" creado`
                 }
                 throw new Error(res.error)
@@ -183,25 +208,30 @@ export function ClientSelector({ onSelect, selectedClient }: ClientSelectorProps
                                                 {selectedClient?.id === client.id && <Check className="h-4 w-4 text-primary" />}
                                             </div>
                                             <div className="text-xs text-muted-foreground flex gap-3 mt-1">
-                                                {client.document && <span>🆔 {client.document}</span>}
-                                                {client.phone && <span>📞 {client.phone}</span>}
+                                                {client.document && <span>🆔 {maskDocument(client.document, role)}</span>}
+                                                {client.phone && <span>📞 {maskPhone(client.phone, role)}</span>}
                                                 {client.city && <span>📍 {client.city}</span>}
                                             </div>
-                                            {client.email && <div className="text-xs text-muted-foreground mt-0.5">📧 {client.email}</div>}
+                                            {client.email && <div className="text-xs text-muted-foreground mt-0.5">📧 {maskEmail(client.email, role)}</div>}
                                         </div>
                                     ))}
 
                                     {clients.length > 0 && <div className="h-px bg-border my-1" />}
 
-                                    <Button
-                                        size="sm"
-                                        variant={clients.length === 0 ? "default" : "secondary"}
-                                        className="w-full justify-start mt-1"
-                                        onClick={handleCreateClick}
-                                    >
-                                        <UserPlus className="mr-2 h-4 w-4" />
-                                        {query.trim().length > 0 ? `Crear nuevo "${query}"` : "Crear nuevo cliente"}
-                                    </Button>
+
+                                    {clients.length > 0 && <div className="h-px bg-border my-1" />}
+
+                                    {role === 'ADMIN' && (
+                                        <Button
+                                            size="sm"
+                                            variant={clients.length === 0 ? "default" : "secondary"}
+                                            className="w-full justify-start mt-1"
+                                            onClick={handleCreateClick}
+                                        >
+                                            <UserPlus className="mr-2 h-4 w-4" />
+                                            {query.trim().length > 0 ? `Crear nuevo "${query}"` : "Crear nuevo cliente"}
+                                        </Button>
+                                    )}
 
                                     {clients.length === 0 && query.trim().length > 0 && (
                                         <div className="text-xs text-center p-2 text-muted-foreground">
@@ -288,19 +318,50 @@ export function ClientSelector({ onSelect, selectedClient }: ClientSelectorProps
                         </div>
 
                         <div className="col-span-2 space-y-2">
-                            <Label>Barrio <span className="text-red-500">*</span></Label>
-                            <Input
-                                value={newClient.neighborhood}
-                                onChange={(e) => setNewClient({ ...newClient, neighborhood: e.target.value })}
-                            />
+                            <Label>Ubicación (Barrio / Vereda) <span className="text-red-500">*</span></Label>
+                            <div className="flex gap-2">
+                                <Select value={neighborhoodType} onValueChange={setNeighborhoodType}>
+                                    <SelectTrigger className="w-[110px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Barrio">Barrio</SelectItem>
+                                        <SelectItem value="Vereda">Vereda</SelectItem>
+                                        <SelectItem value="Otro">Otro</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    placeholder="Nombre..."
+                                    value={neighborhoodName}
+                                    onChange={(e) => setNeighborhoodName(e.target.value)}
+                                    className="flex-1"
+                                />
+                            </div>
                         </div>
 
                         <div className="col-span-2 space-y-2">
                             <Label>Dirección <span className="text-red-500">*</span></Label>
-                            <Input
-                                value={newClient.address}
-                                onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
-                            />
+                            <div className="flex gap-2">
+                                <Select value={addressType} onValueChange={setAddressType}>
+                                    <SelectTrigger className="w-[140px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Casa">Casa</SelectItem>
+                                        <SelectItem value="Apartamento">Apartamento</SelectItem>
+                                        <SelectItem value="Edificio">Edificio</SelectItem>
+                                        <SelectItem value="Oficina">Oficina</SelectItem>
+                                        <SelectItem value="Local">Local</SelectItem>
+                                        <SelectItem value="Otro">Otro</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    placeholder="Detalles (N°, Torre, etc)..."
+                                    value={addressDetail}
+                                    onChange={(e) => setAddressDetail(e.target.value)}
+                                    className="flex-1"
+                                />
+                            </div>
                         </div>
 
                         <div className="col-span-2 space-y-2">

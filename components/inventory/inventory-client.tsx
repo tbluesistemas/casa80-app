@@ -18,7 +18,7 @@ import { ProductDetailsDialog } from "@/components/product-details-dialog"
 import { EditProductDialog } from "@/components/inventory/edit-product-dialog"
 import { CreateProductDialog } from "@/components/inventory/create-product-dialog"
 import { format } from "date-fns"
-import { Search } from "lucide-react"
+import { Search, Eye, EyeOff, DollarSign } from "lucide-react"
 
 interface Product {
     id: string
@@ -32,9 +32,20 @@ interface Product {
     createdAt?: string | Date
 }
 
+import { useAuth } from '@/components/auth-provider'
+
 export function InventoryClient({ products }: { products: Product[] }) {
+    const { role } = useAuth()
     const [searchQuery, setSearchQuery] = useState('')
     const [categoryFilter, setCategoryFilter] = useState<string>('all')
+    const [showTotalValue, setShowTotalValue] = useState(false)
+
+    // Calculate total inventory value
+    const totalInventoryValue = useMemo(() => {
+        return products.reduce((acc, product) => {
+            return acc + (product.totalQuantity * (product.priceUnit || 0))
+        }, 0)
+    }, [products])
 
     // Get unique categories
     const categories = useMemo(() => {
@@ -57,9 +68,39 @@ export function InventoryClient({ products }: { products: Product[] }) {
         <div className="flex-1 space-y-4 md:space-y-8 p-4 md:p-8 pt-4 md:pt-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Inventario</h2>
-                <div className="flex gap-2 bg-muted/50 p-1 rounded-lg w-fit">
-                    <CreateProductDialog />
-                    <ExcelExport products={products} />
+                <div className="flex items-center gap-4">
+                    {role === 'ADMIN' && (
+                        <Card className="bg-muted/30 border-muted">
+                            <CardContent className="p-2 px-4 flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 rounded-full">
+                                    <DollarSign className="h-4 w-4 text-primary" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                                        Valor Total
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-lg tabular-nums">
+                                            {showTotalValue
+                                                ? `$${totalInventoryValue.toLocaleString()}`
+                                                : "•••••••"}
+                                        </span>
+                                        <button
+                                            onClick={() => setShowTotalValue(!showTotalValue)}
+                                            className="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                            aria-label={showTotalValue ? "Ocultar valor" : "Mostrar valor"}
+                                        >
+                                            {showTotalValue ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                    <div className="flex gap-2 bg-muted/50 p-1 rounded-lg w-fit h-fit">
+                        {role === 'ADMIN' && <CreateProductDialog />}
+                        <ExcelExport products={products} />
+                    </div>
                 </div>
             </div>
 
@@ -146,7 +187,7 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
-                                                    <EditProductDialog product={product} />
+                                                    {role === 'ADMIN' && <EditProductDialog product={product} />}
                                                     <HistoryDialog
                                                         productId={product.id}
                                                         productName={product.name}

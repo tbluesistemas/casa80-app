@@ -10,7 +10,7 @@ export default async function ReturnPage({ params }: { params: Promise<{ id: str
         return (
             <div className="p-8">
                 <Alert variant="destructive">
-                    <AlertTitle>Error</AlertTitle>
+                    <AlertTitle>Error al Cargar</AlertTitle>
                     <AlertDescription>{error || "Evento no encontrado"}</AlertDescription>
                 </Alert>
             </div>

@@ -23,11 +23,16 @@ export const metadata: Metadata = {
   description: "Gestión de inventario y reservas",
 };
 
-export default function RootLayout({
+import { AuthProvider } from "@/components/auth-provider";
+import { getCurrentRole } from "@/lib/auth";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const role = await getCurrentRole();
+
   return (
     <html lang="es" suppressHydrationWarning>
       <body
@@ -39,13 +44,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppShell>
-            {children}
-          </AppShell>
-          <div className="fixed bottom-10 right-6 z-50">
-            <ModeToggle />
-          </div>
-          <Toaster />
+          <AuthProvider initialRole={role}>
+            <AppShell>
+              {children}
+            </AppShell>
+            <div className="fixed bottom-10 right-6 z-50">
+              <ModeToggle />
+            </div>
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -3,11 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, Pencil } from "lucide-react";
+import { getCurrentRole } from "@/lib/auth";
+import { getStatusLabel } from "@/lib/utils-status";
 
 export default async function EventPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const { success, data: event, error } = await getEventById(id);
+    const role = await getCurrentRole();
 
     if (!success || !event) {
         return (
@@ -54,7 +57,15 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                             Volver
                         </Button>
                     </Link>
-                    {event.status !== 'COMPLETED' && event.status !== 'CANCELLED' && (
+                    {role === 'ADMIN' && (
+                        <Link href={`/events/${event.id}/edit`}>
+                            <Button variant="outline">
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar
+                            </Button>
+                        </Link>
+                    )}
+                    {role === 'ADMIN' && event.status !== 'COMPLETED' && event.status !== 'CANCELLED' && (
                         <Link href={`/events/${event.id}/return`}>
                             <Button>
                                 <RotateCcw className="mr-2 h-4 w-4" />
@@ -71,7 +82,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                         <CardTitle className="text-sm font-medium">Estado</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{event.status}</div>
+                        <div className="text-2xl font-bold">{getStatusLabel(event.status)}</div>
                     </CardContent>
                 </Card>
             </div>

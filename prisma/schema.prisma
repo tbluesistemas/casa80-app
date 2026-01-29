@@ -14,7 +14,9 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
-  role      String   @default("STAFF") // ADMIN, STAFF
+  password  String
+  role      String   @default("VIEWER") // ADMIN, VIEWER
+  active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -65,14 +67,15 @@ model Client {
 }
 
 model EventItem {
-  id             String  @id @default(cuid())
-  eventId        String
-  event          Event   @relation(fields: [eventId], references: [id])
-  productId      String
-  product        Product @relation(fields: [productId], references: [id])
-  quantity       Int
-  returnedGood   Int     @default(0)
-  returnedDamaged Int    @default(0)
+  id              String  @id @default(cuid())
+  eventId         String
+  event           Event   @relation(fields: [eventId], references: [id])
+  productId       String
+  product         Product @relation(fields: [productId], references: [id])
+  quantity        Int
+  returnedGood    Int     @default(0)
+  returnedDamaged Int     @default(0)
+  damagePaid      Boolean @default(false)
   
   @@unique([eventId, productId])
 }

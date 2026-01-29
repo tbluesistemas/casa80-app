@@ -5,9 +5,10 @@ import { Sidebar } from "./sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isHomePage = pathname === "/";
+    // Hide sidebar on standard full-screen pages like login
+    const isPublicPage = pathname === "/login";
 
-    if (isHomePage) {
+    if (isPublicPage) {
         return (
             <div className="flex min-h-screen flex-col bg-background">
                 {children}

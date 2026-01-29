@@ -9,7 +9,7 @@ export default async function InventoryPage() {
         return (
             <div className="p-8">
                 <Alert variant="destructive">
-                    <AlertTitle>Error</AlertTitle>
+                    <AlertTitle>Error al Cargar</AlertTitle>
                     <AlertDescription>{error || "No se pudieron cargar los productos."}</AlertDescription>
                 </Alert>
             </div>
