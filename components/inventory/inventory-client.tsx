@@ -12,13 +12,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ExcelExport } from "@/components/inventory/excel-export"
+import { Button } from "@/components/ui/button"
+import { ExportButton } from "@/components/export/export-button"
+import { ImportInventoryButton } from "@/components/import/import-inventory-button"
 import { HistoryDialog } from "@/components/inventory/history-dialog"
 import { ProductDetailsDialog } from "@/components/product-details-dialog"
 import { EditProductDialog } from "@/components/inventory/edit-product-dialog"
 import { CreateProductDialog } from "@/components/inventory/create-product-dialog"
 import { format } from "date-fns"
-import { Search, Eye, EyeOff, DollarSign } from "lucide-react"
+import { Search, Eye, EyeOff, DollarSign, AlertTriangle } from "lucide-react"
+import Link from "next/link"
 
 interface Product {
     id: string
@@ -98,8 +101,15 @@ export function InventoryClient({ products }: { products: Product[] }) {
                         </Card>
                     )}
                     <div className="flex gap-2 bg-muted/50 p-1 rounded-lg w-fit h-fit">
+                        <Link href="/inventory/damages">
+                            <Button variant="ghost" size="sm" className="gap-2">
+                                <AlertTriangle className="h-4 w-4" />
+                                <span className="hidden sm:inline">Historial de Daños</span>
+                            </Button>
+                        </Link>
                         {role === 'ADMIN' && <CreateProductDialog />}
-                        <ExcelExport products={products} />
+                        {role === 'ADMIN' && <ImportInventoryButton />}
+                        <ExportButton segment="inventory" variant="ghost" size="sm" />
                     </div>
                 </div>
             </div>

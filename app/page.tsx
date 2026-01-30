@@ -1,23 +1,101 @@
+'use client'
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Package, RotateCcw, TrendingUp } from "lucide-react";
-import { SeedButton } from "@/components/seed-button";
+import { CalendarDays, Package, RotateCcw } from "lucide-react";
 import styles from "./home.module.css";
 import { getDashboardStats } from "@/lib/actions";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
+import { DateFilters } from "@/components/dashboard/date-filters";
 import { getStatusLabel } from "@/lib/utils-status";
 
-export default async function Home() {
-    const stats = await getDashboardStats();
-    const data = stats.success && stats.data ? stats.data : {
-        activeReservations: 0,
-        totalInventory: 0,
-        inventoryValue: 0,
-        pendingReturns: 0,
-        recentEvents: [],
-        categoryStats: [],
-        monthlyStats: []
+const defaultData = {
+    activeReservations: 0,
+    totalInventory: 0,
+    inventoryValue: 0,
+    pendingReturns: 0,
+    recentEvents: [],
+    categoryStats: [],
+    monthlyStats: [],
+    totalRevenue: 0,
+    damageRevenue: 0,
+    projectedRevenue: 0,
+    monthlyRevenue: [],
+    totalClients: 0,
+    activeClients: 0,
+    topClients: [],
+    topRentedProducts: [],
+    topDamagedProducts: [],
+    utilizationRate: 0,
+    completedEvents: 0,
+    cancelledEvents: 0,
+    averageEventValue: 0
+};
+
+export default function Home() {
+    const [data, setData] = useState<any>(defaultData);
+    const [selectedYear, setSelectedYear] = useState<number | null>(null);
+    const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Load initial data with last month by default
+    useEffect(() => {
+        const now = new Date();
+        const lastMonth = now.getMonth(); // 0-11, current month is already "last month" conceptually
+        const year = now.getFullYear();
+
+        // If we're in January, get December of last year
+        const defaultYear = lastMonth === 0 ? year - 1 : year;
+        const defaultMonth = lastMonth === 0 ? 12 : lastMonth;
+
+        loadStats(defaultYear, defaultMonth, true);
+    }, []);
+
+    const loadStats = async (year?: number | null, month?: number | null, isInitial: boolean = false) => {
+        setIsLoading(true);
+        try {
+            const filters: { year?: number; month?: number } = {};
+
+            // If no filters provided and not initial load, use last month as default
+            if (!isInitial && year === undefined && month === undefined) {
+                const now = new Date();
+                const lastMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                filters.year = lastMonth === 0 ? currentYear - 1 : currentYear;
+                filters.month = lastMonth === 0 ? 12 : lastMonth;
+            } else {
+                if (year !== undefined && year !== null) filters.year = year;
+                if (month !== undefined && month !== null) filters.month = month;
+            }
+
+            const stats = await getDashboardStats(Object.keys(filters).length > 0 ? filters : undefined);
+            if (stats.success && stats.data) {
+                setData(stats.data);
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleApplyFilters = () => {
+        loadStats(selectedYear, selectedMonth);
+    };
+
+    const handleClearFilters = () => {
+        setSelectedYear(null);
+        setSelectedMonth(null);
+        // When clearing, go back to last month default
+        const now = new Date();
+        const lastMonth = now.getMonth();
+        const year = now.getFullYear();
+        const defaultYear = lastMonth === 0 ? year - 1 : year;
+        const defaultMonth = lastMonth === 0 ? 12 : lastMonth;
+        loadStats(defaultYear, defaultMonth);
     };
 
     const formatCurrency = (amount: number) => {
@@ -40,7 +118,26 @@ export default async function Home() {
                 <h2 className="text-3xl font-bold tracking-tight">Dashboard Casa80</h2>
             </div>
 
-            <DashboardStats data={data} />
+            <DateFilters
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                onYearChange={setSelectedYear}
+                onMonthChange={setSelectedMonth}
+                onApply={handleApplyFilters}
+                onClear={handleClearFilters}
+                isLoading={isLoading}
+            />
+
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                        <p className="text-sm text-muted-foreground">Cargando estadísticas...</p>
+                    </div>
+                </div>
+            ) : (
+                <DashboardStats data={data} />
+            )}
 
             <div className={styles.mainGrid}>
                 <Card className={styles.quickActionsCard}>

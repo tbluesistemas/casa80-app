@@ -41,7 +41,7 @@ model Event {
   name      String
   startDate DateTime
   endDate   DateTime
-  status    String      @default("BOOKED") // BOOKED, ACTIVE, COMPLETED, CANCELLED
+  status    String      @default("SIN_CONFIRMAR") // SIN_CONFIRMAR, RESERVADO, DESPACHADO, COMPLETADO, CANCELADO
   notes     String?
   items     EventItem[]
   clientId  String?
@@ -67,15 +67,17 @@ model Client {
 }
 
 model EventItem {
-  id              String  @id @default(cuid())
+  id              String    @id @default(cuid())
   eventId         String
-  event           Event   @relation(fields: [eventId], references: [id])
+  event           Event     @relation(fields: [eventId], references: [id])
   productId       String
-  product         Product @relation(fields: [productId], references: [id])
+  product         Product   @relation(fields: [productId], references: [id])
   quantity        Int
-  returnedGood    Int     @default(0)
-  returnedDamaged Int     @default(0)
-  damagePaid      Boolean @default(false)
+  returnedGood    Int       @default(0)
+  returnedDamaged Int       @default(0)
+  damagePaid      Boolean   @default(false)
+  damageRestored  Boolean   @default(false)
+  restoredAt      DateTime?
   
   @@unique([eventId, productId])
 }

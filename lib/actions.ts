@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { sendReservationEmail } from '@/lib/email'
 import { getCurrentRole, UserRole } from '@/lib/auth'
-import { signIn } from '@/auth'
+import { signIn, auth } from '@/auth'
 import { AuthError } from 'next-auth'
 import bcrypt from 'bcryptjs'
 
@@ -17,7 +17,7 @@ async function checkAvailability(
 ) {
     // 1. Find overlapping events
     const whereClause: any = {
-        status: { in: ['BOOKED', 'ACTIVE'] },
+        status: { in: ['RESERVADO', 'DESPACHADO'] }, // Solo estos estados bloquean inventario
         OR: [
             {
                 startDate: { lte: endDate },
@@ -179,9 +179,9 @@ export async function updateEvent(id: string, data: {
         // But to be safe, always check if we are booking/active
         const effectiveStatus = data.status || currentEvent.status
 
-        if (effectiveStatus === 'BOOKED' || effectiveStatus === 'ACTIVE') {
-            // If status is changing TO booked/active from cancelled/completed, we MUST check.
-            // If we are already booked/active, we check if dates or items changed.
+        if (['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(effectiveStatus)) {
+            // If status is changing TO these statuses from cancelled/completed, we MUST check.
+            // If we are already in these statuses, we check if dates or items changed.
 
             const availability = await checkAvailability(
                 effectiveStartDate,
@@ -218,10 +218,10 @@ export async function updateEvent(id: string, data: {
                 // BUT we lose returnedGood/returnedDamaged if we are not careful? 
                 // Ah, this editing is for "Booking" phase mostly. 
                 // If the event is already "Completed" or has return data, editing items is risky with deleteMany.
-                // The requirement is "siempre y cuando el estado del cliente es reservado" (BOOKED).
+                // The requirement is "siempre y cuando el estado del cliente es reservado" (SIN_CONFIRMAR or RESERVADO).
                 // So no return data should exist yet.
 
-                if (currentEvent.status === 'BOOKED' || effectiveStatus === 'BOOKED') {
+                if (['SIN_CONFIRMAR', 'RESERVADO'].includes(currentEvent.status) || ['SIN_CONFIRMAR', 'RESERVADO'].includes(effectiveStatus)) {
                     await tx.eventItem.deleteMany({
                         where: { eventId: id }
                     })
@@ -314,7 +314,7 @@ export async function createEvent(data: {
                 endDate: data.endDate,
                 notes: data.notes,
                 clientId: clientId, // Optional link
-                status: 'BOOKED',
+                status: 'RESERVADO', // Estado inicial: Reservado
                 items: {
                     create: data.items.map((item) => ({
                         productId: item.productId,
@@ -600,23 +600,60 @@ export async function seedDatabase() {
     }
 }
 
-export async function getDashboardStats() {
+export async function getDashboardStats(filters?: {
+    year?: number
+    month?: number  // 1-12
+}) {
     try {
         const now = new Date()
 
-        // 1. Active Reservations (Booked or Active)
+        // Build date filter conditions
+        let dateFilter: any = {}
+        if (filters?.year || filters?.month) {
+            if (filters.year && filters.month) {
+                // Filter by specific month and year
+                const startOfMonth = new Date(filters.year, filters.month - 1, 1)
+                const endOfMonth = new Date(filters.year, filters.month, 0, 23, 59, 59, 999)
+                dateFilter = {
+                    startDate: {
+                        gte: startOfMonth,
+                        lte: endOfMonth
+                    }
+                }
+            } else if (filters.year) {
+                // Filter by year only
+                const startOfYear = new Date(filters.year, 0, 1)
+                const endOfYear = new Date(filters.year, 11, 31, 23, 59, 59, 999)
+                dateFilter = {
+                    startDate: {
+                        gte: startOfYear,
+                        lte: endOfYear
+                    }
+                }
+            } else if (filters.month) {
+                // Filter by month only (across all years)
+                // This is tricky - we need to filter by month number
+                // We'll handle this in the application logic after fetching
+            }
+        }
+
+        // 1. Active Reservations (SIN_CONFIRMAR, RESERVADO, DESPACHADO)
         const activeReservations = await prisma.event.count({
             where: {
-                status: { in: ['BOOKED', 'ACTIVE'] }
+                status: { in: ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'] },
+                ...dateFilter
             }
         })
 
-        // 2. Total Inventory
+        // 2. Total Inventory (not filtered by date)
         const products = await prisma.product.findMany({
             select: {
+                id: true,
+                name: true,
                 category: true,
                 totalQuantity: true,
-                priceReplacement: true
+                priceReplacement: true,
+                priceUnit: true
             }
         })
 
@@ -636,7 +673,8 @@ export async function getDashboardStats() {
         const pendingReturns = await prisma.event.count({
             where: {
                 endDate: { lte: now },
-                status: { not: 'COMPLETED' }
+                status: { not: 'COMPLETADO' },
+                ...dateFilter
             }
         })
 
@@ -646,33 +684,50 @@ export async function getDashboardStats() {
             orderBy: { startDate: 'asc' },
             where: {
                 status: { not: 'CANCELLED' },
-                startDate: { gte: now } // Only future events
+                startDate: { gte: now },
+                ...dateFilter
             }
         })
 
-        // 5. Monthly Stats (Last 6 months)
-        const sixMonthsAgo = new Date()
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+        // 5. Monthly Event Stats
+        // Adjust range based on filters
+        let statsStartDate: Date
+        let monthsToShow = 6
+
+        if (filters?.year && filters?.month) {
+            // Show just the selected month
+            statsStartDate = new Date(filters.year, filters.month - 1, 1)
+            monthsToShow = 1
+        } else if (filters?.year) {
+            // Show all 12 months of the year
+            statsStartDate = new Date(filters.year, 0, 1)
+            monthsToShow = 12
+        } else {
+            // Default: last 6 months
+            statsStartDate = new Date()
+            statsStartDate.setMonth(statsStartDate.getMonth() - 5)
+        }
 
         const allEvents = await prisma.event.findMany({
             where: {
-                startDate: { gte: sixMonthsAgo },
-                status: { not: 'CANCELLED' }
+                startDate: { gte: statsStartDate },
+                status: { not: 'CANCELLED' },
+                ...dateFilter
             },
             select: { startDate: true }
         })
 
         const monthlyStatsMap = new Map<string, number>()
-        // Initialize last 6 months
-        for (let i = 0; i < 6; i++) {
-            const d = new Date()
-            d.setMonth(d.getMonth() - i)
-            const key = d.toLocaleString('es-MX', { month: 'short' })
+        // Initialize months
+        for (let i = 0; i < monthsToShow; i++) {
+            const d = new Date(statsStartDate)
+            d.setMonth(statsStartDate.getMonth() + i)
+            const key = d.toLocaleString('es-MX', { month: 'short', year: filters?.year ? undefined : 'numeric' })
             monthlyStatsMap.set(key, 0)
         }
 
         allEvents.forEach(event => {
-            const key = event.startDate.toLocaleString('es-MX', { month: 'short' })
+            const key = event.startDate.toLocaleString('es-MX', { month: 'short', year: filters?.year ? undefined : 'numeric' })
             if (monthlyStatsMap.has(key)) {
                 monthlyStatsMap.set(key, monthlyStatsMap.get(key)! + 1)
             }
@@ -684,18 +739,230 @@ export async function getDashboardStats() {
                 value,
                 fill: `var(--chart-${(index % 5) + 1})`
             }))
-            .reverse()
+
+        // 6. Revenue Statistics
+        const completedEvents = await prisma.event.findMany({
+            where: {
+                status: 'COMPLETED',
+                ...dateFilter
+            },
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            }
+        })
+
+        let totalRevenue = 0
+        let totalDamageCost = 0
+
+        completedEvents.forEach(event => {
+            event.items.forEach(item => {
+                // Revenue from rentals
+                totalRevenue += item.quantity * item.product.priceUnit
+                // Total cost of damages (only non-restored)
+                if (!item.damageRestored) {
+                    totalDamageCost += item.returnedDamaged * item.product.priceReplacement
+                }
+            })
+        })
+
+        // Projected revenue from active/booked events
+        const activeEvents = await prisma.event.findMany({
+            where: {
+                status: { in: ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'] },
+                ...dateFilter
+            },
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            }
+        })
+
+        let projectedRevenue = 0
+        activeEvents.forEach(event => {
+            event.items.forEach(item => {
+                projectedRevenue += item.quantity * item.product.priceUnit
+            })
+        })
+
+        // Monthly Revenue
+        const monthlyRevenueMap = new Map<string, number>()
+        for (let i = 0; i < monthsToShow; i++) {
+            const d = new Date(statsStartDate)
+            d.setMonth(statsStartDate.getMonth() + i)
+            const key = d.toLocaleString('es-MX', { month: 'short', year: filters?.year ? undefined : 'numeric' })
+            monthlyRevenueMap.set(key, 0)
+        }
+
+        const completedEventsInRange = await prisma.event.findMany({
+            where: {
+                status: 'COMPLETED',
+                startDate: { gte: statsStartDate },
+                ...dateFilter
+            },
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            }
+        })
+
+        completedEventsInRange.forEach(event => {
+            const key = event.startDate.toLocaleString('es-MX', { month: 'short', year: filters?.year ? undefined : 'numeric' })
+            if (monthlyRevenueMap.has(key)) {
+                const revenue = event.items.reduce((acc, item) => {
+                    return acc + (item.quantity * item.product.priceUnit) + (item.returnedDamaged * item.product.priceReplacement)
+                }, 0)
+                monthlyRevenueMap.set(key, monthlyRevenueMap.get(key)! + revenue)
+            }
+        })
+
+        const monthlyRevenue = Array.from(monthlyRevenueMap.entries())
+            .map(([name, value], index) => ({
+                name: name.charAt(0).toUpperCase() + name.slice(1),
+                value,
+                fill: `var(--chart-${(index % 5) + 1})`
+            }))
+
+        // 7. Client Statistics (not filtered - total is absolute)
+        const totalClients = await prisma.client.count()
+
+        const activeClientsData = await prisma.client.findMany({
+            where: {
+                events: {
+                    some: {
+                        status: { in: ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'] },
+                        ...dateFilter
+                    }
+                }
+            }
+        })
+        const activeClients = activeClientsData.length
+
+        // Top 5 clients by event count (filtered by date)
+        const allClientsWithEvents = await prisma.client.findMany({
+            include: {
+                events: {
+                    where: dateFilter.startDate ? dateFilter : undefined
+                }
+            }
+        })
+
+        const topClients = allClientsWithEvents
+            .map(client => ({
+                name: client.name,
+                eventCount: client.events.length
+            }))
+            .filter(client => client.eventCount > 0)
+            .sort((a, b) => b.eventCount - a.eventCount)
+            .slice(0, 5)
+
+        // 8. Product Statistics
+        // Top rented products (filtered by date)
+        const eventItems = await prisma.eventItem.findMany({
+            where: {
+                event: dateFilter.startDate ? dateFilter : undefined
+            },
+            include: { product: true }
+        })
+
+        const productRentalCount = new Map<string, { name: string, count: number }>()
+        const productDamageCount = new Map<string, { name: string, count: number }>()
+
+        eventItems.forEach(item => {
+            // Count rentals
+            const rentalKey = item.productId
+            if (!productRentalCount.has(rentalKey)) {
+                productRentalCount.set(rentalKey, { name: item.product.name, count: 0 })
+            }
+            productRentalCount.get(rentalKey)!.count += item.quantity
+
+            // Count damages
+            if (item.returnedDamaged > 0) {
+                if (!productDamageCount.has(rentalKey)) {
+                    productDamageCount.set(rentalKey, { name: item.product.name, count: 0 })
+                }
+                productDamageCount.get(rentalKey)!.count += item.returnedDamaged
+            }
+        })
+
+        const topRentedProducts = Array.from(productRentalCount.values())
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5)
+
+        const topDamagedProducts = Array.from(productDamageCount.values())
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5)
+
+        // Utilization rate (percentage of inventory currently in use - not filtered by date)
+        const currentlyInUse = await prisma.eventItem.findMany({
+            where: {
+                event: {
+                    status: { in: ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'] }
+                }
+            },
+            include: { product: true }
+        })
+
+        const inUseByProduct = new Map<string, number>()
+        currentlyInUse.forEach(item => {
+            inUseByProduct.set(item.productId, (inUseByProduct.get(item.productId) || 0) + item.quantity)
+        })
+
+        let totalInUse = 0
+        inUseByProduct.forEach(qty => totalInUse += qty)
+
+        const utilizationRate = totalInventory > 0 ? (totalInUse / totalInventory) * 100 : 0
+
+        // 9. Event Statistics
+        const completedEventsCount = await prisma.event.count({
+            where: {
+                status: 'COMPLETED',
+                ...dateFilter
+            }
+        })
+
+        const cancelledEvents = await prisma.event.count({
+            where: {
+                status: 'CANCELLED',
+                ...dateFilter
+            }
+        })
+
+        const averageEventValue = completedEvents.length > 0
+            ? totalRevenue / completedEvents.length
+            : 0
 
         return {
             success: true,
             data: {
+                // Original stats
                 activeReservations,
                 totalInventory,
                 inventoryValue,
                 pendingReturns,
                 recentEvents,
                 categoryStats: rCategoryStats,
-                monthlyStats
+                monthlyStats,
+                // Revenue stats
+                totalRevenue,
+                totalDamageCost,
+                projectedRevenue,
+                monthlyRevenue,
+                // Client stats
+                totalClients,
+                activeClients,
+                topClients,
+                // Product stats
+                topRentedProducts,
+                topDamagedProducts,
+                utilizationRate,
+                // Event stats
+                completedEvents: completedEventsCount,
+                cancelledEvents,
+                averageEventValue
             }
         }
     } catch (error) {
@@ -720,6 +987,70 @@ export async function authenticate(
             }
         }
         throw error;
+    }
+}
+
+// ============================================
+// DAMAGED PRODUCTS HISTORY
+// ============================================
+
+export async function getDamagedProductsHistory(filters?: {
+    showRestored?: boolean  // true = solo restaurados, false = solo pendientes, undefined = todos
+}) {
+    try {
+        const where: any = {
+            returnedDamaged: { gt: 0 }
+        }
+
+        if (filters?.showRestored !== undefined) {
+            where.damageRestored = filters.showRestored
+        }
+
+        const damagedItems = await prisma.eventItem.findMany({
+            where,
+            include: {
+                product: true,
+                event: {
+                    include: {
+                        client: true
+                    }
+                }
+            },
+            orderBy: {
+                restoredAt: 'desc'
+            }
+        })
+
+        return {
+            success: true,
+            data: damagedItems
+        }
+    } catch (error) {
+        console.error('Error fetching damaged products history:', error)
+        return { success: false, error: 'Error al cargar historial de daños' }
+    }
+}
+
+export async function markDamageAsRestored(eventItemId: string) {
+    try {
+        const updated = await prisma.eventItem.update({
+            where: { id: eventItemId },
+            data: {
+                damageRestored: true,
+                restoredAt: new Date()
+            }
+        })
+
+        revalidatePath('/inventory/damages')
+        revalidatePath('/')
+
+        return {
+            success: true,
+            data: updated
+        }
+    } catch (error) {
+        console.error('Error marking damage as restored:', error)
+        return { success: false, error: 'Error al marcar como restaurado' }
     }
 }
 
@@ -834,3 +1165,248 @@ export async function updateUser(userId: string, data: {
     }
 }
 
+// ==================== Event Status Management ====================
+
+import { EventStatus, canTransition } from './event-status'
+
+export async function updateEventStatus(eventId: string, newStatus: EventStatus) {
+    try {
+        const event = await prisma.event.findUnique({
+            where: { id: eventId }
+        })
+
+        if (!event) {
+            return { success: false, error: 'Evento no encontrado' }
+        }
+
+        // Validar transición
+        if (!canTransition(event.status as EventStatus, newStatus)) {
+            return {
+                success: false,
+                error: `No se puede cambiar de ${event.status} a ${newStatus}`
+            }
+        }
+
+        const updated = await prisma.event.update({
+            where: { id: eventId },
+            data: { status: newStatus }
+        })
+
+        revalidatePath('/events')
+        revalidatePath(`/events/${eventId}`)
+        revalidatePath('/')
+
+        return { success: true, data: updated }
+    } catch (error) {
+        console.error('Error updating event status:', error)
+        return { success: false, error: 'Error al actualizar estado' }
+    }
+}
+
+// ==================== Export Actions ====================
+
+export async function getEventsForExport(filters?: {
+    startDate?: Date
+    endDate?: Date
+}) {
+    try {
+        const where: any = {}
+
+        if (filters?.startDate || filters?.endDate) {
+            where.startDate = {}
+            if (filters.startDate) {
+                where.startDate.gte = filters.startDate
+            }
+            if (filters.endDate) {
+                where.startDate.lte = filters.endDate
+            }
+        }
+
+        const events = await prisma.event.findMany({
+            where,
+            include: {
+                client: true,
+                items: {
+                    include: {
+                        product: true
+                    }
+                }
+            },
+            orderBy: { startDate: 'desc' }
+        })
+
+        return { success: true, data: events }
+    } catch (error) {
+        console.error('Error fetching events for export:', error)
+        return { success: false, error: 'Error al obtener eventos' }
+    }
+}
+
+export async function getInventoryForExport() {
+    try {
+        const products = await prisma.product.findMany({
+            include: {
+                eventItems: {
+                    where: {
+                        event: {
+                            status: { in: ['RESERVADO', 'DESPACHADO'] }
+                        }
+                    }
+                }
+            },
+            orderBy: { name: 'asc' }
+        })
+
+        return { success: true, data: products }
+    } catch (error) {
+        console.error('Error fetching inventory for export:', error)
+        return { success: false, error: 'Error al obtener inventario' }
+    }
+}
+
+export async function getClientsForExport() {
+    try {
+        const clients = await prisma.client.findMany({
+            include: {
+                events: {
+                    orderBy: { startDate: 'desc' },
+                    take: 1
+                },
+                _count: {
+                    select: { events: true }
+                }
+            },
+            orderBy: { name: 'asc' }
+        })
+
+        return { success: true, data: clients }
+    } catch (error) {
+        console.error('Error fetching clients for export:', error)
+        return { success: false, error: 'Error al obtener clientes' }
+    }
+}
+
+export async function getDamagedProductsForExport(filters?: {
+    startDate?: Date
+    endDate?: Date
+}) {
+    try {
+        const where: any = {
+            returnedDamaged: { gt: 0 }
+        }
+
+        if (filters?.startDate || filters?.endDate) {
+            where.event = {
+                startDate: {}
+            }
+            if (filters.startDate) {
+                where.event.startDate.gte = filters.startDate
+            }
+            if (filters.endDate) {
+                where.event.startDate.lte = filters.endDate
+            }
+        }
+
+        const damaged = await prisma.eventItem.findMany({
+            where,
+            include: {
+                product: true,
+                event: {
+                    include: {
+                        client: true
+                    }
+                }
+            },
+            orderBy: {
+                event: {
+                    startDate: 'desc'
+                }
+            }
+        })
+
+        return { success: true, data: damaged }
+    } catch (error) {
+        console.error('Error fetching damaged products for export:', error)
+        return { success: false, error: 'Error al obtener productos dañados' }
+    }
+}
+
+// ==================== Import Actions ====================
+
+export async function importInventoryFromExcel(products: {
+    name: string
+    category?: string
+    description?: string
+    totalQuantity: number
+    priceUnit: number
+    priceReplacement: number
+}[]) {
+    try {
+        const session = await auth()
+        if (!session?.user || session.user.role !== 'ADMIN') {
+            return { success: false, error: 'No autorizado' }
+        }
+
+        const results = {
+            created: 0,
+            updated: 0,
+            errors: [] as string[]
+        }
+
+        for (const productData of products) {
+            try {
+                // Buscar si el producto ya existe por nombre
+                const existing = await prisma.product.findFirst({
+                    where: {
+                        name: {
+                            equals: productData.name,
+                            mode: 'insensitive'
+                        }
+                    }
+                })
+
+                if (existing) {
+                    // Actualizar producto existente
+                    await prisma.product.update({
+                        where: { id: existing.id },
+                        data: {
+                            category: productData.category,
+                            description: productData.description,
+                            totalQuantity: productData.totalQuantity,
+                            priceUnit: productData.priceUnit,
+                            priceReplacement: productData.priceReplacement,
+                        }
+                    })
+                    results.updated++
+                } else {
+                    // Crear nuevo producto
+                    await prisma.product.create({
+                        data: {
+                            name: productData.name,
+                            category: productData.category,
+                            description: productData.description,
+                            totalQuantity: productData.totalQuantity,
+                            priceUnit: productData.priceUnit,
+                            priceReplacement: productData.priceReplacement,
+                        }
+                    })
+                    results.created++
+                }
+            } catch (error) {
+                console.error(`Error processing product ${productData.name}:`, error)
+                results.errors.push(`Error al procesar "${productData.name}"`)
+            }
+        }
+
+        revalidatePath('/inventory')
+
+        return {
+            success: true,
+            data: results,
+            message: `Importación completada: ${results.created} creados, ${results.updated} actualizados${results.errors.length > 0 ? `, ${results.errors.length} errores` : ''}`
+        }
+    } catch (error) {
+        console.error('Error importing inventory:', error)
+        return { success: false, error: 'Error al importar inventario' }
+    }
+}

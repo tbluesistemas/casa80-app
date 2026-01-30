@@ -7,7 +7,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Eye, RotateCcw, Pencil } from "lucide-react";
-import { getStatusLabel, getStatusColor } from "@/lib/utils-status";
+import { EventStatusBadge } from "@/components/events/event-status-badge";
+import { EventStatus } from "@/lib/event-status";
 import type { UserRole } from "@/lib/auth";
 
 type Event = {
@@ -21,8 +22,8 @@ type Event = {
 export function EventsList({ events, role }: { events: Event[], role: UserRole }) {
     const [tab, setTab] = useState<'active' | 'history'>('active');
 
-    const activeEvents = events.filter(e => ['BOOKED', 'ACTIVE'].includes(e.status));
-    const historyEvents = events.filter(e => ['COMPLETED', 'CANCELLED'].includes(e.status));
+    const activeEvents = events.filter(e => ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(e.status));
+    const historyEvents = events.filter(e => ['COMPLETADO', 'CANCELADO'].includes(e.status));
 
     const displayedEvents = tab === 'active' ? activeEvents : historyEvents;
 
@@ -67,13 +68,11 @@ export function EventsList({ events, role }: { events: Event[], role: UserRole }
                                 <TableCell className="whitespace-nowrap">{format(new Date(event.startDate), "PPP", { locale: es })}</TableCell>
                                 <TableCell className="whitespace-nowrap">{format(new Date(event.endDate), "PPP", { locale: es })}</TableCell>
                                 <TableCell>
-                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${getStatusColor(event.status)}`}>
-                                        {getStatusLabel(event.status)}
-                                    </span>
+                                    <EventStatusBadge status={event.status as EventStatus} />
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        {role === 'ADMIN' && event.status === 'BOOKED' && (
+                                        {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO'].includes(event.status) && (
                                             <>
                                                 <Link href={`/events/${event.id}/edit`}>
                                                     <Button variant="ghost" size="icon" title="Editar Reserva">

@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { ArrowLeft, RotateCcw, Pencil } from "lucide-react";
 import { getCurrentRole } from "@/lib/auth";
-import { getStatusLabel } from "@/lib/utils-status";
+import { EventStatusControl } from "@/components/events/event-status-control";
+import { EventStatus } from "@/lib/event-status";
 
 export default async function EventPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -57,7 +58,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                             Volver
                         </Button>
                     </Link>
-                    {role === 'ADMIN' && (
+                    {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO'].includes(event.status) && (
                         <Link href={`/events/${event.id}/edit`}>
                             <Button variant="outline">
                                 <Pencil className="mr-2 h-4 w-4" />
@@ -65,7 +66,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                             </Button>
                         </Link>
                     )}
-                    {role === 'ADMIN' && event.status !== 'COMPLETED' && event.status !== 'CANCELLED' && (
+                    {role === 'ADMIN' && !['COMPLETADO', 'CANCELADO'].includes(event.status) && (
                         <Link href={`/events/${event.id}/return`}>
                             <Button>
                                 <RotateCcw className="mr-2 h-4 w-4" />
@@ -82,7 +83,12 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                         <CardTitle className="text-sm font-medium">Estado</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{getStatusLabel(event.status)}</div>
+                        <div className="text-2xl font-bold">
+                            <EventStatusControl
+                                eventId={event.id}
+                                currentStatus={event.status as EventStatus}
+                            />
+                        </div>
                     </CardContent>
                 </Card>
             </div>

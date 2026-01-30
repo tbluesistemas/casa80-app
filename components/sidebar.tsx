@@ -24,6 +24,7 @@ export function Sidebar() {
         { href: "/", label: "Inicio", icon: Home },
         { href: "/events", label: "Reservas", icon: CalendarDays },
         { href: "/inventory", label: "Inventario", icon: Package },
+        { href: "/clients", label: "Clientes", icon: Users },
     ];
 
     if (role === 'ADMIN') {

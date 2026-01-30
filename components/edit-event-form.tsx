@@ -127,7 +127,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
         setItems(items.filter(i => i.productId !== productId))
     }
 
-    const isEditable = event.status === 'BOOKED'
+    const isEditable = ['SIN_CONFIRMAR', 'RESERVADO'].includes(event.status)
 
     const availableProducts = allProducts.filter(p => !items.some(i => i.productId === p.id))
 
@@ -272,10 +272,11 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="BOOKED">Reservado</SelectItem>
-                                <SelectItem value="ACTIVE">En Curso</SelectItem>
-                                <SelectItem value="COMPLETED">Completado</SelectItem>
-                                <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                                <SelectItem value="SIN_CONFIRMAR">Sin Confirmar</SelectItem>
+                                <SelectItem value="RESERVADO">Reservado</SelectItem>
+                                <SelectItem value="DESPACHADO">Despachado</SelectItem>
+                                <SelectItem value="COMPLETADO">Completado</SelectItem>
+                                <SelectItem value="CANCELADO">Cancelado</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
