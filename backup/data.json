@@ -1,0 +1,382 @@
+{
+  "users": [
+    {
+      "id": "cml11s3u20000uq8pbvmnfxep",
+      "email": "admin@casa80.com",
+      "name": "Administrador",
+      "password": "$2b$10$.ruqi0tI5hoQYiEeh0S/WeY8F.QaZ.aALA5.VJUO9scdqbRszLg5i",
+      "role": "ADMIN",
+      "active": true,
+      "createdAt": "2026-01-30T15:38:16.299Z",
+      "updatedAt": "2026-01-30T15:38:16.299Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "cml1144v50000cm2hcqhpte58",
+      "name": "Silla Tiffany Dorada",
+      "category": null,
+      "description": "Silla elegante para eventos formales, color dorado",
+      "imageUrl": "/images/silla-tiffany.jpg",
+      "totalQuantity": 100,
+      "priceUnit": 2000,
+      "priceReplacement": 150,
+      "createdAt": "2026-01-30T15:19:37.889Z",
+      "updatedAt": "2026-01-30T16:31:59.069Z"
+    },
+    {
+      "id": "cml1144va0001cm2hohqls7ys",
+      "name": "Mesa Redonda 10 personas",
+      "category": null,
+      "description": "Mesa plegable de madera, 1.5m de diámetro",
+      "imageUrl": "/images/mesa-redonda.jpg",
+      "totalQuantity": 20,
+      "priceUnit": 9000,
+      "priceReplacement": 800,
+      "createdAt": "2026-01-30T15:19:37.895Z",
+      "updatedAt": "2026-01-30T16:31:48.351Z"
+    },
+    {
+      "id": "cml1144vf0002cm2hoxhjpybi",
+      "name": "Mantel Blanco Premium",
+      "category": null,
+      "description": "Mantel de tela gruesa, resistente a manchas",
+      "imageUrl": "/images/mantel-blanco.jpg",
+      "totalQuantity": 50,
+      "priceUnit": 32221,
+      "priceReplacement": 200,
+      "createdAt": "2026-01-30T15:19:37.899Z",
+      "updatedAt": "2026-01-30T16:31:35.192Z"
+    },
+    {
+      "id": "seed-silla-tiffany",
+      "name": "Silla Tiffany Dorada",
+      "category": null,
+      "description": "Silla elegante para eventos formales, color dorado",
+      "imageUrl": "/images/silla-tiffany.jpg",
+      "totalQuantity": 102,
+      "priceUnit": 2500,
+      "priceReplacement": 150,
+      "createdAt": "2026-01-30T15:34:24.833Z",
+      "updatedAt": "2026-01-30T16:33:14.517Z"
+    },
+    {
+      "id": "seed-mesa-redonda",
+      "name": "Mesa Redonda 10 personas",
+      "category": null,
+      "description": "Mesa plegable de madera, 1.5m de diámetro",
+      "imageUrl": "/images/mesa-redonda.jpg",
+      "totalQuantity": 20,
+      "priceUnit": 90000,
+      "priceReplacement": 800,
+      "createdAt": "2026-01-30T15:34:24.839Z",
+      "updatedAt": "2026-01-30T16:31:53.369Z"
+    },
+    {
+      "id": "seed-mantel-blanco",
+      "name": "Mantel Blanco Premium",
+      "category": null,
+      "description": "Mantel de tela gruesa, resistente a manchas",
+      "imageUrl": "/images/mantel-blanco.jpg",
+      "totalQuantity": 50,
+      "priceUnit": 12000,
+      "priceReplacement": 200,
+      "createdAt": "2026-01-30T15:34:24.844Z",
+      "updatedAt": "2026-01-30T16:31:42.790Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "cml13qe6f0008uk44urvxxzbl",
+      "name": "Carlos Rodríguez",
+      "startDate": "2026-01-31T05:00:00.000Z",
+      "endDate": "2026-01-31T05:00:00.000Z",
+      "status": "BOOKED",
+      "notes": "",
+      "clientId": "seed-client-2",
+      "createdAt": "2026-01-30T16:32:55.623Z",
+      "updatedAt": "2026-01-30T16:32:55.623Z"
+    },
+    {
+      "id": "cml13weo1000iuk445nvlqf2s",
+      "name": "luis escorcia",
+      "startDate": "2026-02-02T05:00:00.000Z",
+      "endDate": "2026-02-02T05:00:00.000Z",
+      "status": "BOOKED",
+      "notes": "luis escorcia",
+      "clientId": "cml13vpyc000guk44nwa5e3lg",
+      "createdAt": "2026-01-30T16:37:36.193Z",
+      "updatedAt": "2026-01-30T16:37:36.193Z"
+    },
+    {
+      "id": "cml1427ou000ruk44tom8bbh3",
+      "name": "luis escorcia",
+      "startDate": "2026-01-29T00:00:00.000Z",
+      "endDate": "2026-01-29T00:00:00.000Z",
+      "status": "RESERVADO",
+      "notes": "",
+      "clientId": "cml13vpyc000guk44nwa5e3lg",
+      "createdAt": "2026-01-30T16:42:07.086Z",
+      "updatedAt": "2026-01-30T16:53:09.057Z"
+    }
+  ],
+  "clients": [
+    {
+      "id": "seed-client-1",
+      "name": "María García",
+      "document": "12345678",
+      "email": "maria.garcia@example.com",
+      "phone": "3001234567",
+      "department": "Atlántico",
+      "city": "Barranquilla",
+      "neighborhood": "El Prado",
+      "address": "Calle 72 #45-23",
+      "notes": "Cliente frecuente",
+      "createdAt": "2026-01-30T15:34:24.849Z",
+      "updatedAt": "2026-01-30T15:34:24.849Z"
+    },
+    {
+      "id": "seed-client-2",
+      "name": "Carlos Rodríguez",
+      "document": "87654321",
+      "email": "carlos.rodriguez@example.com",
+      "phone": "3009876543",
+      "department": "Atlántico",
+      "city": "Barranquilla",
+      "neighborhood": "Riomar",
+      "address": "Carrera 51B #85-45",
+      "notes": null,
+      "createdAt": "2026-01-30T15:34:24.853Z",
+      "updatedAt": "2026-01-30T15:34:24.853Z"
+    },
+    {
+      "id": "seed-client-3",
+      "name": "Ana Martínez",
+      "document": "11223344",
+      "email": "ana.martinez@example.com",
+      "phone": "3005551234",
+      "department": "Atlántico",
+      "city": "Barranquilla",
+      "neighborhood": "Alto Prado",
+      "address": "Calle 98 #52-10",
+      "notes": null,
+      "createdAt": "2026-01-30T15:34:24.858Z",
+      "updatedAt": "2026-01-30T15:34:24.858Z"
+    },
+    {
+      "id": "cml13vpyc000guk44nwa5e3lg",
+      "name": "luis escorcia",
+      "document": "101020303",
+      "email": "email@email.com",
+      "phone": "3009876542",
+      "department": "Atlántico",
+      "city": "Barranquilla",
+      "neighborhood": "Barrio Prado",
+      "address": "Otro calle 72 ·58 - 45",
+      "notes": "",
+      "createdAt": "2026-01-30T16:37:04.165Z",
+      "updatedAt": "2026-01-30T16:37:04.165Z"
+    }
+  ],
+  "eventItems": [
+    {
+      "id": "cml13qe6f000auk44xkiu8h71",
+      "eventId": "cml13qe6f0008uk44urvxxzbl",
+      "productId": "cml1144vf0002cm2hoxhjpybi",
+      "quantity": 4,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13qe6f000buk44xe8gqtx3",
+      "eventId": "cml13qe6f0008uk44urvxxzbl",
+      "productId": "seed-silla-tiffany",
+      "quantity": 4,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13qe6f000cuk44yi0l5s26",
+      "eventId": "cml13qe6f0008uk44urvxxzbl",
+      "productId": "seed-mantel-blanco",
+      "quantity": 5,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13qe6f000duk44k8g1po8o",
+      "eventId": "cml13qe6f0008uk44urvxxzbl",
+      "productId": "cml1144va0001cm2hohqls7ys",
+      "quantity": 5,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13qe6f000euk44rsztfxuj",
+      "eventId": "cml13qe6f0008uk44urvxxzbl",
+      "productId": "seed-mesa-redonda",
+      "quantity": 5,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13qe6f000fuk44o6ufia6n",
+      "eventId": "cml13qe6f0008uk44urvxxzbl",
+      "productId": "cml1144v50000cm2hcqhpte58",
+      "quantity": 5,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13weo1000kuk44gkfh7dc0",
+      "eventId": "cml13weo1000iuk445nvlqf2s",
+      "productId": "cml1144vf0002cm2hoxhjpybi",
+      "quantity": 4,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13weo1000luk44e624e73f",
+      "eventId": "cml13weo1000iuk445nvlqf2s",
+      "productId": "seed-mantel-blanco",
+      "quantity": 3,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13weo1000muk44aksolnbw",
+      "eventId": "cml13weo1000iuk445nvlqf2s",
+      "productId": "seed-silla-tiffany",
+      "quantity": 4,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13weo1000nuk446pw5jgsl",
+      "eventId": "cml13weo1000iuk445nvlqf2s",
+      "productId": "cml1144v50000cm2hcqhpte58",
+      "quantity": 4,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13weo1000ouk44dtdbxpsz",
+      "eventId": "cml13weo1000iuk445nvlqf2s",
+      "productId": "cml1144va0001cm2hohqls7ys",
+      "quantity": 5,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml13weo1000puk44qfehdo5x",
+      "eventId": "cml13weo1000iuk445nvlqf2s",
+      "productId": "seed-mesa-redonda",
+      "quantity": 4,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml14gegy001euk44mjui745g",
+      "eventId": "cml1427ou000ruk44tom8bbh3",
+      "productId": "cml1144v50000cm2hcqhpte58",
+      "quantity": 14,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml14gegy001fuk448orm4wqk",
+      "eventId": "cml1427ou000ruk44tom8bbh3",
+      "productId": "cml1144va0001cm2hohqls7ys",
+      "quantity": 4,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml14gegy001guk44z4qzr2qq",
+      "eventId": "cml1427ou000ruk44tom8bbh3",
+      "productId": "cml1144vf0002cm2hoxhjpybi",
+      "quantity": 5,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml14gegy001huk44bu1ibesg",
+      "eventId": "cml1427ou000ruk44tom8bbh3",
+      "productId": "seed-mantel-blanco",
+      "quantity": 6,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml14gegy001iuk44y8fj0wbg",
+      "eventId": "cml1427ou000ruk44tom8bbh3",
+      "productId": "seed-mesa-redonda",
+      "quantity": 8,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    },
+    {
+      "id": "cml14gegy001juk44q0zgss8y",
+      "eventId": "cml1427ou000ruk44tom8bbh3",
+      "productId": "seed-silla-tiffany",
+      "quantity": 7,
+      "returnedGood": 0,
+      "returnedDamaged": 0,
+      "damagePaid": false,
+      "damageRestored": false,
+      "restoredAt": null
+    }
+  ],
+  "inventoryLogs": []
+}

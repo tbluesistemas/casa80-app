@@ -7,7 +7,7 @@ type UserRole = 'ADMIN' | 'VIEWER'
 
 interface AuthContextType {
     role: UserRole
-    setRole: (role: UserRole) => void // Kept for compatibility, but acts as no-op or refresh
+    setRole: (role: UserRole) => void
     isLoading: boolean
 }
 
@@ -42,7 +42,7 @@ export function useAuth() {
 
     return {
         role,
-        setRole: () => { }, // No-op in real auth
+        setRole: (role: UserRole) => { }, // No-op in real auth
         isLoading: status === 'loading'
     }
 }

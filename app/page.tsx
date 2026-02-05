@@ -22,7 +22,7 @@ const defaultData = {
     totalRevenue: 0,
     damageRevenue: 0,
     projectedRevenue: 0,
-    monthlyRevenue: [],
+    monthlyRevenue: [], 
     totalClients: 0,
     activeClients: 0,
     topClients: [],

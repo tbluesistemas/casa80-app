@@ -540,65 +540,7 @@ export async function getEventById(id: string) {
     }
 }
 
-export async function seedDatabase() {
-    try {
-        // Always ensure Admin exists and has correct password
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        await prisma.user.upsert({
-            where: { email: 'admin@casa80.com' },
-            update: {
-                password: hashedPassword,
-                role: 'ADMIN'
-            } as any,
-            create: {
-                name: 'Administrador Principal',
-                email: 'admin@casa80.com',
-                password: hashedPassword,
-                role: 'ADMIN'
-            } as any
-        })
 
-        const existing = await prisma.product.count()
-        if (existing > 0) {
-            return { success: true, message: 'Admin actualizado. Base de datos ya tiene productos.' }
-        }
-
-        await prisma.product.createMany({
-            data: [
-                {
-                    name: 'Silla Tiffany Dorada',
-                    description: 'Silla elegante para eventos formales, color dorado',
-                    totalQuantity: 100,
-                    priceUnit: 30.00,
-                    priceReplacement: 150.00,
-                    imageUrl: '/images/silla-tiffany.jpg',
-                },
-                {
-                    name: 'Mesa Redonda 10 personas',
-                    description: 'Mesa plegable de madera, 1.5m de diámetro',
-                    totalQuantity: 20,
-                    priceUnit: 200.00,
-                    priceReplacement: 800.00,
-                    imageUrl: '/images/mesa-redonda.jpg',
-                },
-                {
-                    name: 'Mantel Blanco Premium',
-                    description: 'Mantel de tela gruesa, resistente a manchas',
-                    totalQuantity: 50,
-                    priceUnit: 50.00,
-                    priceReplacement: 200.00,
-                    imageUrl: '/images/mantel-blanco.jpg',
-                },
-            ]
-        })
-        revalidatePath('/inventory')
-
-        return { success: true, message: 'Datos de semilla creados y Admin reseteado (admin@casa80.com / admin123)' }
-    } catch (error) {
-        console.error('Error seeding:', error)
-        return { success: false, error: 'Error al crear datos de semilla' }
-    }
-}
 
 export async function getDashboardStats(filters?: {
     year?: number
@@ -761,7 +703,7 @@ export async function getDashboardStats(filters?: {
                 // Revenue from rentals
                 totalRevenue += item.quantity * item.product.priceUnit
                 // Total cost of damages (only non-restored)
-                if (!item.damageRestored) {
+                if (!(item as any).damageRestored) {
                     totalDamageCost += item.returnedDamaged * item.product.priceReplacement
                 }
             })
@@ -1018,7 +960,7 @@ export async function getDamagedProductsHistory(filters?: {
             },
             orderBy: {
                 restoredAt: 'desc'
-            }
+            } as any
         })
 
         return {
@@ -1038,7 +980,7 @@ export async function markDamageAsRestored(eventItemId: string) {
             data: {
                 damageRestored: true,
                 restoredAt: new Date()
-            }
+            } as any
         })
 
         revalidatePath('/inventory/damages')
@@ -1359,8 +1301,8 @@ export async function importInventoryFromExcel(products: {
                 const existing = await prisma.product.findFirst({
                     where: {
                         name: {
-                            equals: productData.name,
-                            mode: 'insensitive'
+                            equals: productData.name
+                            // mode: 'insensitive' // Not supported in default SQLite Prisma
                         }
                     }
                 })
