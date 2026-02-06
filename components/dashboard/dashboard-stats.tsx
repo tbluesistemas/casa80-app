@@ -230,7 +230,7 @@ export function DashboardStats({ data }: DashboardStatsProps) {
                     </CardHeader>
                     <CardContent>
                         <div className="h-[250px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={300}>
                                 {showChart === 'events' ? (
                                     <BarChart data={data.monthlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />

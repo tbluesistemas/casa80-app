@@ -18,7 +18,9 @@ import { ImportInventoryButton } from "@/components/import/import-inventory-butt
 import { HistoryDialog } from "@/components/inventory/history-dialog"
 import { ProductDetailsDialog } from "@/components/product-details-dialog"
 import { EditProductDialog } from "@/components/inventory/edit-product-dialog"
+import { UtilsStatus } from "@/lib/utils-status"
 import { CreateProductDialog } from "@/components/inventory/create-product-dialog"
+import { DeleteProductDialog } from "@/components/inventory/delete-product-dialog"
 import { format } from "date-fns"
 import { Search, Eye, EyeOff, DollarSign, AlertTriangle } from "lucide-react"
 import Link from "next/link"
@@ -198,6 +200,7 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
                                                     {role === 'ADMIN' && <EditProductDialog product={product} />}
+                                                    {role === 'ADMIN' && <DeleteProductDialog productId={product.id} productName={product.name} />}
                                                     <HistoryDialog
                                                         productId={product.id}
                                                         productName={product.name}

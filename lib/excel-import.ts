@@ -5,28 +5,28 @@ export function generateInventoryTemplate() {
     // Datos de ejemplo para la plantilla
     const templateData = [
         {
-            'Nombre del Producto': 'Silla Tiffany Blanca',
+            'Producto': 'Silla Tiffany Blanca',
             'Categoría': 'Mobiliario',
             'Descripción': 'Silla elegante para eventos formales',
             'Cantidad Total': 50,
             'Precio Unitario': 25.00,
-            'Precio de Daño': 150.00
+            'Precio Reemplazo': 150.00
         },
         {
-            'Nombre del Producto': 'Mesa Rectangular 8 personas',
+            'Producto': 'Mesa Rectangular 8 personas',
             'Categoría': 'Mobiliario',
             'Descripción': 'Mesa plegable de madera, 2m x 0.8m',
             'Cantidad Total': 15,
             'Precio Unitario': 50.00,
-            'Precio de Daño': 800.00
+            'Precio Reemplazo': 800.00
         },
         {
-            'Nombre del Producto': '',
+            'Producto': '',
             'Categoría': '',
             'Descripción': '',
             'Cantidad Total': 0,
             'Precio Unitario': 0,
-            'Precio de Daño': 0
+            'Precio Reemplazo': 0
         }
     ]
 
@@ -36,12 +36,12 @@ export function generateInventoryTemplate() {
 
     // Configurar ancho de columnas
     const colWidths = [
-        { wch: 35 }, // Nombre del Producto
+        { wch: 35 }, // Producto
         { wch: 20 }, // Categoría
         { wch: 40 }, // Descripción
         { wch: 15 }, // Cantidad Total
         { wch: 18 }, // Precio Unitario
-        { wch: 18 }, // Precio de Daño
+        { wch: 18 }, // Precio Reemplazo
     ]
     ws['!cols'] = colWidths
 
@@ -51,10 +51,10 @@ export function generateInventoryTemplate() {
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '1. Llena la hoja "Plantilla Inventario" con tus productos' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '2. NO modifiques los nombres de las columnas' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '3. Campos OBLIGATORIOS:' },
-        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Nombre del Producto' },
-        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Cantidad Total (número entero mayor a 0)' },
-        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Precio Unitario (número decimal)' },
-        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Precio de Daño (número decimal)' },
+        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Producto (Nombre)' },
+        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Cantidad Total (número entero)' },
+        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Precio Unitario (número)' },
+        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Precio Reemplazo (Precio de daño)' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '4. Campos OPCIONALES:' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Categoría' },
@@ -112,28 +112,42 @@ export function parseInventoryExcel(file: File): Promise<ImportResult> {
                 jsonData.forEach((row, index) => {
                     const rowNum = index + 2 // +2 porque Excel empieza en 1 y hay header
 
+                    // Helper to find value by potential keys
+                    const getValue = (keys: string[]) => {
+                        for (const key of keys) {
+                            if (row[key] !== undefined) return row[key]
+                            // Also try case insensitive
+                            const foundKey = Object.keys(row).find(k => k.toLowerCase().trim() === key.toLowerCase().trim())
+                            if (foundKey) return row[foundKey]
+                        }
+                        return undefined
+                    }
+
                     // Validar campos obligatorios
-                    const name = row['Nombre del Producto']?.toString().trim()
+                    const name = getValue(['Nombre del Producto', 'Producto', 'Nombre'])?.toString().trim()
                     if (!name) {
-                        errors.push(`Fila ${rowNum}: Falta el nombre del producto`)
+                        errors.push(`Fila ${rowNum}: Falta el nombre del producto (Columna 'Producto' o 'Nombre del Producto')`)
                         return
                     }
 
-                    const totalQuantity = parseInt(row['Cantidad Total'])
-                    if (isNaN(totalQuantity) || totalQuantity <= 0) {
-                        errors.push(`Fila ${rowNum}: Cantidad Total debe ser un número mayor a 0`)
+                    const quantityRaw = getValue(['Cantidad Total', 'Cantidad', 'Stock', 'Total'])
+                    const totalQuantity = parseInt(quantityRaw)
+                    if (isNaN(totalQuantity) || totalQuantity < 0) { // Changed to allow 0 if needed, but usually > 0 for import
+                        errors.push(`Fila ${rowNum}: Cantidad Total debe ser un número válido`)
                         return
                     }
 
-                    const priceUnit = parseFloat(row['Precio Unitario'])
+                    const priceUnitRaw = getValue(['Precio Unitario', 'Precio', 'Valor Unitario'])
+                    const priceUnit = parseFloat(priceUnitRaw)
                     if (isNaN(priceUnit) || priceUnit < 0) {
                         errors.push(`Fila ${rowNum}: Precio Unitario debe ser un número válido`)
                         return
                     }
 
-                    const priceReplacement = parseFloat(row['Precio de Daño'])
+                    const priceReplacementRaw = getValue(['Precio de Daño', 'Precio Reemplazo', 'Valor Daño', 'Costo Reemplazo'])
+                    const priceReplacement = parseFloat(priceReplacementRaw)
                     if (isNaN(priceReplacement) || priceReplacement < 0) {
-                        errors.push(`Fila ${rowNum}: Precio de Daño debe ser un número válido`)
+                        errors.push(`Fila ${rowNum}: Precio de Daño/Reemplazo debe ser un número válido`)
                         return
                     }
 
@@ -143,8 +157,8 @@ export function parseInventoryExcel(file: File): Promise<ImportResult> {
                         totalQuantity,
                         priceUnit,
                         priceReplacement,
-                        category: row['Categoría']?.toString().trim() || undefined,
-                        description: row['Descripción']?.toString().trim() || undefined,
+                        category: getValue(['Categoría', 'Categoria'])?.toString().trim() || undefined,
+                        description: getValue(['Descripción', 'Descripcion'])?.toString().trim() || undefined,
                     }
 
                     products.push(product)

@@ -1342,6 +1342,7 @@ export async function importInventoryFromExcel(products: {
 
         revalidatePath('/inventory')
 
+        // ... existing code ...
         return {
             success: true,
             data: results,
@@ -1350,5 +1351,37 @@ export async function importInventoryFromExcel(products: {
     } catch (error) {
         console.error('Error importing inventory:', error)
         return { success: false, error: 'Error al importar inventario' }
+    }
+}
+
+export async function deleteProduct(id: string) {
+    const role = await getCurrentRole()
+    if (role !== 'ADMIN') {
+        return { success: false, error: 'No autorizado: Permisos insuficientes' }
+    }
+
+    try {
+        // 1. Check if product is used in any EventItem
+        const usageCount = await prisma.eventItem.count({
+            where: { productId: id }
+        })
+
+        if (usageCount > 0) {
+            return {
+                success: false,
+                error: 'No se puede eliminar: El producto es parte de eventos existentes (pasados o futuros). Para preservar el historial, edite el producto o ajuste su stock.'
+            }
+        }
+
+        // 2. Delete
+        await prisma.product.delete({
+            where: { id }
+        })
+
+        revalidatePath('/inventory')
+        return { success: true }
+    } catch (error) {
+        console.error('Error deleting product:', error)
+        return { success: false, error: 'Error al eliminar producto' }
     }
 }
