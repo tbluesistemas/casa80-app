@@ -40,8 +40,9 @@ export default async function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
+          storageKey="casa80-theme-v2"
           disableTransitionOnChange
         >
           <AuthProvider initialRole={role}>

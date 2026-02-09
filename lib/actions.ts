@@ -55,10 +55,13 @@ async function checkAvailability(
             }
         }
 
-        if (usedQuantity + item.quantity > product.totalQuantity) {
+        // Check if requested quantity + used quantity exceeds total available (minus damaged)
+        // @ts-ignore: quantityDamaged exists in schema but type is stale
+        if (usedQuantity + item.quantity > (product.totalQuantity - (product as any).quantityDamaged)) {
             return {
                 success: false,
-                error: `No hay suficiente stock para "${product.name}". Disponible: ${product.totalQuantity - usedQuantity}, Solicitado: ${item.quantity}`,
+                // @ts-ignore: quantityDamaged exists in schema but type is stale
+                error: `No hay suficiente stock para "${product.name}". Disponible: ${(product.totalQuantity - (product as any).quantityDamaged) - usedQuantity}, Solicitado: ${item.quantity} (Fuera de servicio: ${(product as any).quantityDamaged})`,
             }
         }
     }
@@ -481,6 +484,16 @@ export async function registerReturn(eventId: string, items: ReturnItem[]) {
             // Calculate cost
             if (item.returnedDamaged > 0) {
                 totalDamageCost += item.returnedDamaged * product.priceReplacement
+
+                // Increment quantityDamaged on the product (mark as Out of Service)
+                await prisma.product.update({
+                    where: { id: item.productId },
+                    data: {
+                        quantityDamaged: {
+                            increment: item.returnedDamaged
+                        }
+                    } as any
+                })
             }
 
             // Update EventItem
@@ -625,8 +638,7 @@ export async function getDashboardStats(filters?: {
             take: 5,
             orderBy: { startDate: 'asc' },
             where: {
-                status: { not: 'CANCELLED' },
-                startDate: { gte: now },
+                status: { notIn: ['CANCELLED', 'COMPLETADO'] }, // StartDate restrict removed to show ongoing/overdue
                 ...dateFilter
             }
         })

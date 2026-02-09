@@ -30,6 +30,8 @@ model Product {
   totalQuantity    Int         @default(0)
   priceUnit        Float       @default(0.0)
   priceReplacement Float       @default(0.0)
+  quantityDamaged  Int         @default(0)
+
   eventItems       EventItem[]
   inventoryLogs    InventoryLog[]
   createdAt        DateTime    @default(now())

@@ -21,9 +21,14 @@ type Event = {
 
 export function EventsList({ events, role }: { events: Event[], role: UserRole }) {
     const [tab, setTab] = useState<'active' | 'history'>('active');
+    const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
     const activeEvents = events.filter(e => ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(e.status));
-    const historyEvents = events.filter(e => ['COMPLETADO', 'CANCELADO'].includes(e.status));
+    const historyEvents = events.filter(e => {
+        if (!['COMPLETADO', 'CANCELADO'].includes(e.status)) return false;
+        if (statusFilter === 'ALL') return true;
+        return e.status === statusFilter;
+    });
 
     const displayedEvents = tab === 'active' ? activeEvents : historyEvents;
 
@@ -49,6 +54,20 @@ export function EventsList({ events, role }: { events: Event[], role: UserRole }
                     Historial ({historyEvents.length})
                 </button>
             </div>
+
+            {tab === 'history' && (
+                <div className="flex justify-end">
+                    <select
+                        className="h-9 w-[180px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="ALL">Todos los estados</option>
+                        <option value="COMPLETADO">Completados</option>
+                        <option value="CANCELADO">Cancelados</option>
+                    </select>
+                </div>
+            )}
 
             <div className="rounded-md border overflow-x-auto">
                 <Table>

@@ -18,7 +18,6 @@ import { ImportInventoryButton } from "@/components/import/import-inventory-butt
 import { HistoryDialog } from "@/components/inventory/history-dialog"
 import { ProductDetailsDialog } from "@/components/product-details-dialog"
 import { EditProductDialog } from "@/components/inventory/edit-product-dialog"
-import { UtilsStatus } from "@/lib/utils-status"
 import { CreateProductDialog } from "@/components/inventory/create-product-dialog"
 import { DeleteProductDialog } from "@/components/inventory/delete-product-dialog"
 import { format } from "date-fns"
@@ -31,6 +30,7 @@ interface Product {
     category?: string | null
     description?: string | null
     totalQuantity: number
+    quantityDamaged: number
     priceUnit?: number
     priceReplacement: number
     updatedAt: string | Date
@@ -151,7 +151,9 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                 <TableRow>
                                     <TableHead className="min-w-[80px]">Cat.</TableHead>
                                     <TableHead className="min-w-[200px]">Nombre / Descripción</TableHead>
-                                    <TableHead className="text-right min-w-[80px]">Cantidad</TableHead>
+                                    <TableHead className="text-right min-w-[80px]">Total</TableHead>
+                                    <TableHead className="text-right min-w-[80px]">Disponible</TableHead>
+                                    <TableHead className="text-right min-w-[80px] text-red-600">Dañado</TableHead>
                                     <TableHead className="text-right min-w-[100px]">Valor Unitario</TableHead>
                                     <TableHead className="text-right min-w-[100px]">Valor Daño</TableHead>
                                     <TableHead className="text-right min-w-[140px]">Última Actualización</TableHead>
@@ -187,7 +189,13 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                                     </div>
                                                 </ProductDetailsDialog>
                                             </TableCell>
-                                            <TableCell className="text-right font-bold">{product.totalQuantity}</TableCell>
+                                            <TableCell className="text-right font-bold text-muted-foreground">{product.totalQuantity}</TableCell>
+                                            <TableCell className="text-right font-bold text-green-600">
+                                                {product.totalQuantity - (product.quantityDamaged || 0)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-bold text-red-600">
+                                                {product.quantityDamaged || 0}
+                                            </TableCell>
                                             <TableCell className="text-right font-medium">
                                                 ${(product.priceUnit || 0).toFixed(0)}
                                             </TableCell>
