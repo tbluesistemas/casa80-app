@@ -21,7 +21,7 @@ export function Sidebar() {
     const { role } = useAuth(); // Get current role
 
     const links = [
-        { href: "/", label: "Inicio", icon: Home },
+        { href: "/inicio", label: "Inicio", icon: Home },
         { href: "/events", label: "Reservas", icon: CalendarDays },
         { href: "/inventory", label: "Inventario", icon: Package },
         { href: "/clients", label: "Clientes", icon: Users },

@@ -13,7 +13,7 @@ export const authConfig = {
 
             // Allow access to login page
             if (isLoginPage) {
-                if (isLoggedIn) return Response.redirect(new URL('/', nextUrl));
+                if (isLoggedIn) return Response.redirect(new URL('/inicio', nextUrl));
                 return true;
             }
 

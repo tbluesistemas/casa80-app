@@ -14,7 +14,7 @@ export default auth((req) => {
 
     // If user is logged in and trying to access login page, redirect to dashboard
     if (isLoggedIn && isLoginPage) {
-        return Response.redirect(new URL('/', nextUrl))
+        return Response.redirect(new URL('/inicio', nextUrl))
     }
 
     // If user is not logged in and trying to access any page except login, redirect to login
