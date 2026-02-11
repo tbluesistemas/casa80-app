@@ -91,7 +91,7 @@ export function EventsList({ events, role }: { events: Event[], role: UserRole }
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO'].includes(event.status) && (
+                                        {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(event.status) && (
                                             <>
                                                 <Link href={`/events/${event.id}/edit`}>
                                                     <Button variant="ghost" size="icon" title="Editar Reserva">

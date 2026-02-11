@@ -127,7 +127,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
         setItems(items.filter(i => i.productId !== productId))
     }
 
-    const isEditable = ['SIN_CONFIRMAR', 'RESERVADO'].includes(event.status)
+    const isEditable = ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(event.status)
 
     const availableProducts = allProducts.filter(p => !items.some(i => i.productId === p.id))
 
