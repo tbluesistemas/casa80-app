@@ -8,7 +8,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Package, DollarSign, Archive } from "lucide-react"
+import { Package, DollarSign, Archive, AlertTriangle } from "lucide-react"
 import { format } from "date-fns"
 
 interface ProductDetailsProps {
@@ -18,6 +18,7 @@ interface ProductDetailsProps {
         description?: string | null
         category?: string | null
         totalQuantity: number
+        quantityDamaged?: number
         priceUnit?: number
         priceReplacement: number
         updatedAt?: Date | string
@@ -57,6 +58,16 @@ export function ProductDetailsDialog({ product, children }: ProductDetailsProps)
                             </div>
                             <span className="text-xl font-bold text-red-700">
                                 ${product.priceReplacement.toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-col p-3 bg-orange-50 rounded-lg border border-orange-100">
+                            <div className="flex items-center gap-2 text-orange-600 mb-1">
+                                <AlertTriangle className="h-4 w-4" />
+                                <span className="text-xs font-semibold uppercase">Cant. Dañada</span>
+                            </div>
+                            <span className="text-xl font-bold text-orange-700">
+                                {product.quantityDamaged || 0}
                             </span>
                         </div>
 
