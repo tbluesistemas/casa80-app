@@ -232,7 +232,7 @@ export function ClientSelector({ onSelect, selectedClient }: ClientSelectorProps
                 {role === 'ADMIN' && (
                     <Button
                         size="icon"
-                        variant="soft"
+                        variant="secondary"
                         className="shrink-0 border"
                         onClick={handleCreateClick}
                         title={query.trim().length > 0 ? `Crear nuevo: ${query}` : "Crear nuevo cliente"}

@@ -144,7 +144,7 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
         })
     }
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (shouldPrint: boolean) => {
         // Validation
         if (!name) return toast.error('Ingresa el nombre del evento/cliente')
         if (!startDate) return toast.error('Selecciona la fecha de inicio')
@@ -189,7 +189,7 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                 setCart({})
                 router.refresh()
                 // Redirect based on user choice
-                if (print) {
+                if (shouldPrint) {
                     router.push(`/events/${result.data.id}?print=true`)
                 } else {
                     router.push('/events')
