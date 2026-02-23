@@ -11,7 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { toast } from "sonner"
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Printer, Save } from 'lucide-react'
 
 interface EditEventFormProps {
     event: {
@@ -67,8 +67,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
         return items.reduce((acc, item) => acc + (item.quantity * item.priceUnit), 0)
     }, [items])
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const handleSubmit = async (shouldPrint: boolean = false) => {
         setLoading(true)
 
         const validItems = items.filter(i => i.quantity > 0).map(i => ({
@@ -87,7 +86,11 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
 
         if (result.success) {
             toast.success('Reserva actualizada correctamente')
-            router.push('/events')
+            if (shouldPrint) {
+                router.push(`/events/${event.id}?print=true`)
+            } else {
+                router.push('/events')
+            }
         } else {
             toast.error(result.error)
         }
@@ -136,7 +139,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
             <CardHeader>
                 <CardTitle>Información de la Reserva</CardTitle>
             </CardHeader>
-            <form onSubmit={handleSubmit}>
+            <form>
                 <CardContent className="space-y-4">
                     <div className="grid gap-2">
                         <Label htmlFor="name">Nombre del Evento *</Label>
@@ -296,9 +299,16 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                     <Button type="button" variant="outline" onClick={() => router.push('/events')}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={loading}>
-                        {loading ? 'Guardando...' : 'Guardar Cambios'}
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button type="button" variant="outline" disabled={loading} onClick={() => handleSubmit(false)}>
+                            <Save className="mr-2 h-4 w-4" />
+                            {loading ? 'Guardando...' : 'Solo Guardar'}
+                        </Button>
+                        <Button type="button" disabled={loading} onClick={() => handleSubmit(true)}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            {loading ? 'Guardando...' : 'Guardar e Imprimir'}
+                        </Button>
+                    </div>
                 </CardFooter>
             </form>
         </Card>

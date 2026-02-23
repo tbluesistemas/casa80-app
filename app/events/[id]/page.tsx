@@ -259,9 +259,9 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                                             <Mail className="h-4 w-4 text-muted-foreground mt-0.5 print:h-3 print:w-3" />
                                             <span className="break-all print:text-xs">{event.client.email || "Sin correo"}</span>
                                         </div>
-                                        <div className="flex items-start gap-3 print:hidden">
-                                            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                                            <span>{event.client.address ? `${event.client.address}, ${event.client.city}` : "Sin dirección"}</span>
+                                        <div className="flex items-start gap-3 print:gap-2">
+                                            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 print:h-3 print:w-3" />
+                                            <span className="print:text-xs">{event.client.address ? `${event.client.address}, ${event.client.city}` : "Sin dirección"}</span>
                                         </div>
                                     </div>
                                 </>
