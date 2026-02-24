@@ -62,7 +62,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
     // Calculations
     const subtotal = event.items.reduce((acc: number, item: any) => acc + (item.quantity * (item.product.priceUnit || 0)), 0);
     const deposit = event.deposit || 0;
-    const total = subtotal - deposit;
+    const total = subtotal + deposit;
 
     const startDate = formatDateInfo(event.startDate);
     const endDate = formatDateInfo(event.endDate);
@@ -181,7 +181,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                                 {deposit > 0 && (
                                     <div className="flex justify-between w-full md:w-1/2 lg:w-1/3 text-sm print:w-64">
                                         <span className="text-muted-foreground print:text-black">Depósito / Anticipo</span>
-                                        <span className="text-green-600 font-medium print:text-black">-{formatCurrency(deposit)}</span>
+                                        <span className="font-medium print:text-black">+{formatCurrency(deposit)}</span>
                                     </div>
                                 )}
                                 <Separator className="my-2 w-full md:w-1/2 lg:w-1/3 print:w-64 print:my-1" />
@@ -287,7 +287,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider print:hidden">Inicio</p>
                                 <div className="flex flex-col print:flex-row print:gap-2">
                                     <span className="text-xs font-bold w-12 hidden print:inline-block">INICIO:</span>
-                                    <p className="font-medium print:text-xs">{startDate.full} - {startDate.time}</p>
+                                    <p className="font-medium print:text-xs">{startDate.full}</p>
                                 </div>
                             </div>
                             <div className="relative pl-4 border-l-2 border-primary/20 space-y-1 print:border-0 print:pl-0">
@@ -295,7 +295,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider print:hidden">Fin</p>
                                 <div className="flex flex-col print:flex-row print:gap-2">
                                     <span className="text-xs font-bold w-12 hidden print:inline-block">FIN:</span>
-                                    <p className="font-medium print:text-xs">{endDate.full} - {endDate.time}</p>
+                                    <p className="font-medium print:text-xs">{endDate.full}</p>
                                 </div>
                             </div>
                         </CardContent>
