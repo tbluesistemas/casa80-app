@@ -152,18 +152,18 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
             <div className="flex justify-end">
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button className="w-full sm:w-auto">
                             <Plus className="mr-2 h-4 w-4" />
                             Agregar Usuario
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="w-[95vw] max-w-[425px] rounded-lg">
                         <DialogHeader>
                             <DialogTitle>Nuevo Usuario</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Nombre</Label>
+                                <Label className="text-right text-xs sm:text-sm">Nombre</Label>
                                 <Input
                                     className="col-span-3"
                                     value={newUser.name}
@@ -171,7 +171,7 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Email</Label>
+                                <Label className="text-right text-xs sm:text-sm">Email</Label>
                                 <Input
                                     className="col-span-3"
                                     type="email"
@@ -180,7 +180,7 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Contraseña</Label>
+                                <Label className="text-right text-xs sm:text-sm">Contraseña</Label>
                                 <Input
                                     className="col-span-3"
                                     type="password"
@@ -189,7 +189,7 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Rol</Label>
+                                <Label className="text-right text-xs sm:text-sm">Rol</Label>
                                 <Select
                                     value={newUser.role}
                                     onValueChange={(val) => setNewUser({ ...newUser, role: val })}
@@ -205,7 +205,7 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button onClick={handleCreate} disabled={loading}>
+                            <Button onClick={handleCreate} disabled={loading} className="w-full sm:w-auto">
                                 {loading ? "Creando..." : "Crear Usuario"}
                             </Button>
                         </DialogFooter>
@@ -214,13 +214,13 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
 
                 {/* Edit User Dialog */}
                 <Dialog open={editOpen} onOpenChange={setEditOpen}>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="w-[95vw] max-w-[425px] rounded-lg">
                         <DialogHeader>
                             <DialogTitle>Editar Usuario</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Nombre</Label>
+                                <Label className="text-right text-xs sm:text-sm">Nombre</Label>
                                 <Input
                                     className="col-span-3"
                                     value={editUser.name}
@@ -228,7 +228,7 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Email</Label>
+                                <Label className="text-right text-xs sm:text-sm">Email</Label>
                                 <Input
                                     className="col-span-3"
                                     type="email"
@@ -237,21 +237,21 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Contraseña</Label>
+                                <Label className="text-right text-xs sm:text-sm">Contraseña</Label>
                                 <div className="col-span-3 space-y-1">
                                     <Input
                                         type="password"
                                         value={editUser.password}
                                         onChange={(e) => setEditUser({ ...editUser, password: e.target.value })}
-                                        placeholder="Dejar vacío para no cambiar"
+                                        placeholder="Dejar vacío"
                                     />
-                                    <p className="text-xs text-muted-foreground">
-                                        Opcional: solo completa si deseas cambiar la contraseña
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Solo para cambiarla
                                     </p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Rol</Label>
+                                <Label className="text-right text-xs sm:text-sm">Rol</Label>
                                 <Select
                                     value={editUser.role}
                                     onValueChange={(val) => setEditUser({ ...editUser, role: val })}
@@ -267,15 +267,74 @@ export function UserList({ initialUsers }: { initialUsers: User[] }) {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button onClick={handleUpdate} disabled={loading}>
-                                {loading ? "Actualizando..." : "Actualizar Usuario"}
+                            <Button onClick={handleUpdate} disabled={loading} className="w-full sm:w-auto">
+                                {loading ? "Actualizando..." : "Actualizar"}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
 
-            <div className="rounded-md border">
+            {/* Mobile View: Cards */}
+            <div className="md:hidden space-y-3">
+                {users.map((user) => (
+                    <div key={user.id} className="border rounded-md p-4 bg-card space-y-3">
+                        <div className="flex justify-between items-start">
+                            <div className="min-w-0">
+                                <div className="font-bold truncate">{user.name}</div>
+                                <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                            </div>
+                            <div className="flex gap-1 shrink-0">
+                                <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${user.role === 'ADMIN'
+                                    ? 'bg-purple-50 text-purple-700 ring-purple-700/10'
+                                    : 'bg-gray-50 text-gray-600 ring-gray-500/10'
+                                    }`}>
+                                    {user.role}
+                                </span>
+                                <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${user.active
+                                    ? 'bg-green-50 text-green-700 ring-green-700/10'
+                                    : 'bg-red-50 text-red-700 ring-red-700/10'
+                                    }`}>
+                                    {user.active ? 'Activo' : 'Pausado'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleToggleActive(user.id, user.active)}
+                            >
+                                {user.active ? (
+                                    <><PauseCircle className="h-3.5 w-3.5 mr-1 text-orange-500" /> Pausar</>
+                                ) : (
+                                    <><PlayCircle className="h-3.5 w-3.5 mr-1 text-green-500" /> Activar</>
+                                )}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleEdit(user)}
+                            >
+                                <Pencil className="h-3.5 w-3.5 mr-1 text-blue-500" /> Editar
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleDelete(user.id)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5 mr-1 text-red-500" /> Borrar
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block rounded-md border overflow-hidden">
                 <Table>
                     <TableHeader>
                         <TableRow>

@@ -61,25 +61,29 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
 
     // Calculations
     const subtotal = event.items.reduce((acc: number, item: any) => acc + (item.quantity * (item.product.priceUnit || 0)), 0);
+    const transport = event.transport || 0;
+    const discountPercent = event.discount || 0;
+    const subWithTrans = subtotal + transport;
+    const discountAmount = subWithTrans * (discountPercent / 100);
     const deposit = event.deposit || 0;
-    const total = subtotal + deposit;
+    const total = subWithTrans - discountAmount - deposit;
 
     const startDate = formatDateInfo(event.startDate);
     const endDate = formatDateInfo(event.endDate);
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 max-w-7xl mx-auto print:p-0 print:pt-4 print:max-w-none">
+        <div className="flex-1 space-y-4 md:space-y-6 p-4 md:p-8 pt-4 md:pt-6 max-w-7xl mx-auto print:p-0 print:pt-4 print:max-w-none">
             {/* --- HEADER --- */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-3xl font-bold tracking-tight print:text-xl">{event.name}</h2>
-                        <Badge variant="outline" className="text-sm px-3 py-1 hidden md:inline-flex print:inline-flex print:border-0 print:px-0">
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight print:text-xl truncate max-w-[250px] sm:max-w-none">{event.name}</h2>
+                        <Badge variant="outline" className="text-xs md:text-sm px-2 md:px-3 py-0.5 md:py-1 hidden md:inline-flex print:inline-flex print:border-0 print:px-0">
                             {event.id.slice(-6)}
                         </Badge>
                     </div>
-                    <p className="text-muted-foreground flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
+                    <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-2">
+                        <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                         {startDate.full}
                     </p>
                 </div>
@@ -88,26 +92,29 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
 
                     {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO'].includes(event.status) && (
                         <Link href={`/events/${event.id}/edit`}>
-                            <Button variant="outline">
+                            <Button variant="outline" size="sm" className="md:h-10 md:px-4 md:py-2">
                                 <Pencil className="mr-2 h-4 w-4" />
-                                Editar
+                                <span className="hidden sm:inline">Editar</span>
+                                <span className="sm:hidden text-xs">Editar</span>
                             </Button>
                         </Link>
                     )}
 
                     {role === 'ADMIN' && !['CANCELADO', 'SIN_CONFIRMAR'].includes(event.status) && (
                         <Link href={`/events/${event.id}/return`}>
-                            <Button variant="secondary">
+                            <Button variant="secondary" size="sm" className="md:h-10 md:px-4 md:py-2">
                                 <RotateCcw className="mr-2 h-4 w-4" />
-                                Devolución
+                                <span className="hidden sm:inline">Devolución</span>
+                                <span className="sm:hidden text-xs">Devolución</span>
                             </Button>
                         </Link>
                     )}
 
                     <Link href="/events">
-                        <Button variant="outline">
+                        <Button variant="outline" size="sm" className="md:h-10 md:px-4 md:py-2">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Volver
+                            <span className="hidden sm:inline">Volver</span>
+                            <span className="sm:hidden text-xs">Volver</span>
                         </Button>
                     </Link>
                 </div>
@@ -121,52 +128,80 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                 <div className="md:col-span-2 space-y-6 print:contents">
                     {/* ITEMS TABLE */}
                     <Card className="overflow-hidden print:order-3 print:col-span-2 print:shadow-none print:border-0">
-                        <CardHeader className="bg-muted/30 pb-4 print:bg-transparent print:p-0 print:pb-2">
+                        <CardHeader className="bg-muted/30 pb-4 px-4 md:px-6 print:bg-transparent print:p-0 print:pb-2">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-lg flex items-center gap-2 print:text-sm">
-                                    <Box className="h-5 w-5 text-primary print:h-4 print:w-4" />
+                                <CardTitle className="text-base md:text-lg flex items-center gap-2 print:text-sm">
+                                    <Box className="h-4 w-4 md:h-5 md:w-5 text-primary print:h-4 print:w-4" />
                                     Detalle de Productos
                                 </CardTitle>
-                                <Badge variant="secondary" className="print:hidden">{event.items.length} items</Badge>
+                                <Badge variant="secondary" className="text-xs print:hidden">{event.items.length} items</Badge>
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/10 print:bg-transparent print:border-b-black">
-                                        <TableHead className="w-[50%] print:text-black font-bold print:h-8 print:text-xs">Producto</TableHead>
-                                        <TableHead className="text-right print:text-black font-bold print:h-8 print:text-xs">Precio Unit.</TableHead>
-                                        <TableHead className="text-center print:text-black font-bold print:h-8 print:text-xs">Cant.</TableHead>
-                                        <TableHead className="text-right print:text-black font-bold print:h-8 print:text-xs">Total</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody className="print:text-xs">
-                                    {event.items.map((item: any) => (
-                                        <TableRow key={item.productId} className="group print:border-b-muted/50">
-                                            <TableCell className="font-medium print:py-1">
-                                                <div className="flex flex-col">
-                                                    <span>{item.product.name}</span>
-                                                    {(item.returnedDamaged > 0 || item.returnedGood > 0) && (
-                                                        <span className="text-xs text-muted-foreground flex gap-2 mt-1">
-                                                            {item.returnedGood > 0 && <span className="text-green-600">✓ {item.returnedGood} devueltos</span>}
-                                                            {item.returnedDamaged > 0 && <span className="text-destructive">⚠ {item.returnedDamaged} dañados</span>}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right text-muted-foreground print:py-1">
-                                                {formatCurrency(item.product.priceUnit || 0)}
-                                            </TableCell>
-                                            <TableCell className="text-center font-semibold print:py-1">
-                                                {item.quantity}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium print:py-1">
+                            {/* Mobile: Cards */}
+                            <div className="md:hidden divide-y">
+                                {event.items.map((item: any) => (
+                                    <div key={item.productId} className="p-4 space-y-2">
+                                        <div className="flex justify-between gap-2">
+                                            <div className="font-medium text-sm flex-1">{item.product.name}</div>
+                                            <div className="font-bold text-sm shrink-0">
                                                 {formatCurrency((item.product.priceUnit || 0) * item.quantity)}
-                                            </TableCell>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                            <div>
+                                                {formatCurrency(item.product.priceUnit || 0)} x {item.quantity}
+                                            </div>
+                                            {(item.returnedDamaged > 0 || item.returnedGood > 0) && (
+                                                <div className="flex flex-col items-end gap-1 mt-1">
+                                                    {item.returnedGood > 0 && <Badge variant="outline" className="text-[10px] text-green-600 border-green-200 bg-green-50">✓ {item.returnedGood} ok</Badge>}
+                                                    {item.returnedDamaged > 0 && <Badge variant="outline" className="text-[10px] text-destructive border-red-200 bg-red-50">⚠ {item.returnedDamaged} dañados</Badge>}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop: Table */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/10 print:bg-transparent print:border-b-black">
+                                            <TableHead className="w-[50%] print:text-black font-bold print:h-8 print:text-xs">Producto</TableHead>
+                                            <TableHead className="text-right print:text-black font-bold print:h-8 print:text-xs">Precio Unit.</TableHead>
+                                            <TableHead className="text-center print:text-black font-bold print:h-8 print:text-xs">Cant.</TableHead>
+                                            <TableHead className="text-right print:text-black font-bold print:h-8 print:text-xs">Total</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody className="print:text-xs">
+                                        {event.items.map((item: any) => (
+                                            <TableRow key={item.productId} className="group print:border-b-muted/50">
+                                                <TableCell className="font-medium print:py-1">
+                                                    <div className="flex flex-col">
+                                                        <span>{item.product.name}</span>
+                                                        {(item.returnedDamaged > 0 || item.returnedGood > 0) && (
+                                                            <span className="text-xs text-muted-foreground flex gap-2 mt-1">
+                                                                {item.returnedGood > 0 && <span className="text-green-600">✓ {item.returnedGood} devueltos</span>}
+                                                                {item.returnedDamaged > 0 && <span className="text-destructive">⚠ {item.returnedDamaged} dañados</span>}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right text-muted-foreground print:py-1">
+                                                    {formatCurrency(item.product.priceUnit || 0)}
+                                                </TableCell>
+                                                <TableCell className="text-center font-semibold print:py-1">
+                                                    {item.quantity}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium print:py-1">
+                                                    {formatCurrency((item.product.priceUnit || 0) * item.quantity)}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -178,16 +213,28 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
                                     <span className="text-muted-foreground print:text-black">Subtotal</span>
                                     <span>{formatCurrency(subtotal)}</span>
                                 </div>
+                                {transport > 0 && (
+                                    <div className="flex justify-between w-full md:w-1/2 lg:w-1/3 text-sm print:w-64">
+                                        <span className="text-muted-foreground print:text-black">Transporte</span>
+                                        <span>+{formatCurrency(transport)}</span>
+                                    </div>
+                                )}
+                                {discountPercent > 0 && (
+                                    <div className="flex justify-between w-full md:w-1/2 lg:w-1/3 text-sm print:w-64">
+                                        <span className="text-muted-foreground print:text-black">Descuento ({discountPercent}%)</span>
+                                        <span className="text-blue-600 font-medium">-{formatCurrency(discountAmount)}</span>
+                                    </div>
+                                )}
                                 {deposit > 0 && (
                                     <div className="flex justify-between w-full md:w-1/2 lg:w-1/3 text-sm print:w-64">
                                         <span className="text-muted-foreground print:text-black">Depósito / Anticipo</span>
-                                        <span className="font-medium print:text-black">+{formatCurrency(deposit)}</span>
+                                        <span className="text-green-600 font-medium">-{formatCurrency(deposit)}</span>
                                     </div>
                                 )}
                                 <Separator className="my-2 w-full md:w-1/2 lg:w-1/3 print:w-64 print:my-1" />
                                 <div className="flex justify-between w-full md:w-1/2 lg:w-1/3 text-lg font-bold print:w-64 print:text-base">
                                     <span>Total a Pagar</span>
-                                    <span className="text-primary print:text-black">{formatCurrency(total)}</span>
+                                    <span className="text-primary print:text-black">{formatCurrency(Math.max(0, total))}</span>
                                 </div>
                             </div>
                         </CardContent>

@@ -7,6 +7,8 @@ export function generateInventoryTemplate() {
         {
             'Producto': 'Silla Tiffany Blanca',
             'Categoría': 'Mobiliario',
+            'Subcategoría': 'Sillas',
+            'Novedad': 'Nuevo',
             'Descripción': 'Silla elegante para eventos formales',
             'Cantidad Total': 50,
             'Precio Unitario': 25.00,
@@ -15,6 +17,8 @@ export function generateInventoryTemplate() {
         {
             'Producto': 'Mesa Rectangular 8 personas',
             'Categoría': 'Mobiliario',
+            'Subcategoría': 'Mesas',
+            'Novedad': '',
             'Descripción': 'Mesa plegable de madera, 2m x 0.8m',
             'Cantidad Total': 15,
             'Precio Unitario': 50.00,
@@ -23,6 +27,8 @@ export function generateInventoryTemplate() {
         {
             'Producto': '',
             'Categoría': '',
+            'Subcategoría': '',
+            'Novedad': '',
             'Descripción': '',
             'Cantidad Total': 0,
             'Precio Unitario': 0,
@@ -38,6 +44,8 @@ export function generateInventoryTemplate() {
     const colWidths = [
         { wch: 35 }, // Producto
         { wch: 20 }, // Categoría
+        { wch: 20 }, // Subcategoría
+        { wch: 18 }, // Novedad
         { wch: 40 }, // Descripción
         { wch: 15 }, // Cantidad Total
         { wch: 18 }, // Precio Unitario
@@ -57,7 +65,9 @@ export function generateInventoryTemplate() {
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Precio Reemplazo (Precio de daño)' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '4. Campos OPCIONALES:' },
-        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Categoría' },
+        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Categoría (ej: Mobiliario, Decoración)' },
+        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Subcategoría (ej: Sillas, Mesas, Lounge)' },
+        { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Novedad (ej: Nuevo, Renovado, Descontinuado)' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '   - Descripción' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '' },
         { 'INSTRUCCIONES PARA IMPORTAR INVENTARIO': '5. Elimina las filas de ejemplo antes de importar' },
@@ -77,6 +87,8 @@ export function generateInventoryTemplate() {
 export interface ImportedProduct {
     name: string
     category?: string
+    subcategory?: string
+    novedad?: string
     description?: string
     totalQuantity: number
     priceUnit: number
@@ -142,22 +154,32 @@ export function parseInventoryExcel(file: File): Promise<ImportResult> {
                         return
                     }
 
+                    // Helper to parse a numeric value — strips $, dots, commas, spaces
+                    const parseNumber = (raw: any, allowDecimal = true): number => {
+                        if (raw === undefined || raw === null || raw === '') return 0
+                        const cleaned = raw.toString().replace(/[$\s]/g, '').replace(/\./g, '').replace(/,/g, '.')
+                        const n = allowDecimal ? parseFloat(cleaned) : parseInt(cleaned)
+                        return isNaN(n) ? NaN : n
+                    }
+
                     const quantityRaw = getValue(['Cantidad Total', 'Cantidad', 'Stock', 'Total'])
-                    const totalQuantity = parseInt(quantityRaw)
-                    if (isNaN(totalQuantity) || totalQuantity < 0) { // Changed to allow 0 if needed, but usually > 0 for import
+                    const totalQuantity = quantityRaw === undefined || quantityRaw === null || quantityRaw === ''
+                        ? 0
+                        : parseInt(quantityRaw.toString().replace(/[^0-9]/g, '') || '0')
+                    if (isNaN(totalQuantity) || totalQuantity < 0) {
                         errors.push(`Fila ${rowNum}: Cantidad Total debe ser un número válido`)
                         return
                     }
 
                     const priceUnitRaw = getValue(['Precio Unitario', 'Precio', 'Valor Unitario'])
-                    const priceUnit = parseFloat(priceUnitRaw)
+                    const priceUnit = parseNumber(priceUnitRaw)
                     if (isNaN(priceUnit) || priceUnit < 0) {
                         errors.push(`Fila ${rowNum}: Precio Unitario debe ser un número válido`)
                         return
                     }
 
-                    const priceReplacementRaw = getValue(['Precio de Daño', 'Precio Reemplazo', 'Valor Daño', 'Costo Reemplazo'])
-                    const priceReplacement = parseFloat(priceReplacementRaw)
+                    const priceReplacementRaw = getValue(['Precio de Daño', 'Precio Reemplazo', 'Valor Daño', 'Costo Reemplazo', 'Precio de reemplazo'])
+                    const priceReplacement = parseNumber(priceReplacementRaw)
                     if (isNaN(priceReplacement) || priceReplacement < 0) {
                         errors.push(`Fila ${rowNum}: Precio de Daño/Reemplazo debe ser un número válido`)
                         return
@@ -170,6 +192,8 @@ export function parseInventoryExcel(file: File): Promise<ImportResult> {
                         priceUnit,
                         priceReplacement,
                         category: getValue(['Categoría', 'Categoria'])?.toString().trim() || undefined,
+                        subcategory: getValue(['Subcategoría', 'Subcategoria'])?.toString().trim() || undefined,
+                        novedad: getValue(['Novedad'])?.toString().trim() || undefined,
                         description: getValue(['Descripción', 'Descripcion'])?.toString().trim() || undefined,
                     }
 

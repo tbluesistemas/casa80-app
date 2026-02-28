@@ -37,7 +37,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <Sidebar onLinkClick={() => setOpen(false)} className="border-none w-full shadow-none" />
                     </SheetContent>
                 </Sheet>
-                <div className="font-bold text-lg">Casa80</div>
+                <div className="flex items-center gap-2">
+                    <img src="/logo.png" alt="Casa80 Logo" className="h-10 w-auto object-contain" />
+                    <div className="flex flex-col">
+                        <div className="font-bold text-base leading-none">Casa80</div>
+                        <div className="text-[7px] text-muted-foreground font-medium uppercase tracking-tight">
+                            El ALIADO perfecto para tus eventos!
+                        </div>
+                    </div>
+                </div>
             </header>
 
             {/* Desktop Sidebar */}

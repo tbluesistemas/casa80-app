@@ -23,6 +23,8 @@ export function CreateProductDialog() {
     const [formData, setFormData] = useState({
         name: '',
         category: '',
+        subcategory: '',
+        novedad: '',
         description: '',
         totalQuantity: 0,
         priceUnit: 0,
@@ -42,6 +44,8 @@ export function CreateProductDialog() {
         const result = await createProduct({
             name: formData.name,
             category: formData.category || undefined,
+            subcategory: formData.subcategory || undefined,
+            novedad: formData.novedad || undefined,
             description: formData.description || undefined,
             totalQuantity: formData.totalQuantity,
             priceUnit: formData.priceUnit,
@@ -51,10 +55,11 @@ export function CreateProductDialog() {
         if (result.success) {
             toast.success('Producto creado correctamente')
             setOpen(false)
-            // Reset form
             setFormData({
                 name: '',
                 category: '',
+                subcategory: '',
+                novedad: '',
                 description: '',
                 totalQuantity: 0,
                 priceUnit: 0,
@@ -90,13 +95,33 @@ export function CreateProductDialog() {
                                 placeholder="Ej: Mesa redonda"
                             />
                         </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="category">Categoría</Label>
+                                <Input
+                                    id="category"
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    placeholder="Ej: Mobiliario"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="subcategory">Subcategoría</Label>
+                                <Input
+                                    id="subcategory"
+                                    value={formData.subcategory}
+                                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                                    placeholder="Ej: Sillas"
+                                />
+                            </div>
+                        </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="category">Categoría</Label>
+                            <Label htmlFor="novedad">Novedad</Label>
                             <Input
-                                id="category"
-                                value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                placeholder="General"
+                                id="novedad"
+                                value={formData.novedad}
+                                onChange={(e) => setFormData({ ...formData, novedad: e.target.value })}
+                                placeholder="Ej: Nuevo, Renovado..."
                             />
                         </div>
                         <div className="grid gap-2">

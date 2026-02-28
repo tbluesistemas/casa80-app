@@ -10,14 +10,14 @@ export default async function EventsPage() {
     const role = await getCurrentRole();
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Reservas</h2>
-                <div className="flex gap-2">
+        <div className="flex-1 space-y-4 md:space-y-8 p-4 md:p-8 pt-4 md:pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Reservas</h2>
+                <div className="flex gap-2 flex-wrap">
                     <ExportButton segment="events" />
                     {role === 'ADMIN' && (
                         <Link href="/events/new">
-                            <Button>Nueva Reserva</Button>
+                            <Button className="w-full sm:w-auto">Nueva Reserva</Button>
                         </Link>
                     )}
                 </div>

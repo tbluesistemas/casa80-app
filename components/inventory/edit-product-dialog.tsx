@@ -22,20 +22,25 @@ interface EditProductDialogProps {
         id: string
         name: string
         category?: string | null
+        subcategory?: string | null
+        novedad?: string | null
         description?: string | null
         totalQuantity: number
         quantityDamaged: number
         priceUnit?: number
         priceReplacement: number
     }
+    children?: React.ReactNode
 }
 
-export function EditProductDialog({ product }: EditProductDialogProps) {
+export function EditProductDialog({ product, children }: EditProductDialogProps) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         name: product.name,
         category: product.category || '',
+        subcategory: product.subcategory || '',
+        novedad: product.novedad || '',
         description: product.description || '',
         totalQuantity: product.totalQuantity,
         quantityDamaged: product.quantityDamaged || 0,
@@ -50,6 +55,8 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
         const result = await updateProduct(product.id, {
             name: formData.name,
             category: formData.category || null,
+            subcategory: formData.subcategory || null,
+            novedad: formData.novedad || null,
             description: formData.description || null,
             totalQuantity: formData.totalQuantity,
             quantityDamaged: formData.quantityDamaged,
@@ -69,9 +76,11 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Pencil className="h-4 w-4" />
-                </Button>
+                {children ?? (
+                    <Button variant="ghost" size="icon">
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
@@ -88,13 +97,33 @@ export function EditProductDialog({ product }: EditProductDialogProps) {
                                 required
                             />
                         </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="category">Categoría</Label>
+                                <Input
+                                    id="category"
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    placeholder="Ej: Mobiliario"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="subcategory">Subcategoría</Label>
+                                <Input
+                                    id="subcategory"
+                                    value={formData.subcategory}
+                                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                                    placeholder="Ej: Sillas"
+                                />
+                            </div>
+                        </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="category">Categoría</Label>
+                            <Label htmlFor="novedad">Novedad</Label>
                             <Input
-                                id="category"
-                                value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                placeholder="General"
+                                id="novedad"
+                                value={formData.novedad}
+                                onChange={(e) => setFormData({ ...formData, novedad: e.target.value })}
+                                placeholder="Ej: Nuevo, Renovado..."
                             />
                         </div>
                         <div className="grid gap-2">

@@ -6,9 +6,12 @@ export default auth((req) => {
 
     const isLoginPage = nextUrl.pathname === '/login'
     const isApiRoute = nextUrl.pathname.startsWith('/api')
+    const isStaticFile = nextUrl.pathname.match(/\.(png|jpg|jpeg|svg|gif|ico|webmanifest)$/) ||
+        nextUrl.pathname === '/favicon.ico' ||
+        nextUrl.pathname === '/logo.png'
 
-    // Allow API routes (including NextAuth)
-    if (isApiRoute) {
+    // Allow API routes and static files
+    if (isApiRoute || isStaticFile) {
         return
     }
 
@@ -27,5 +30,5 @@ export default auth((req) => {
 })
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico|images/).*)'],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico|logo.png|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.svg$|images/).*)'],
 }

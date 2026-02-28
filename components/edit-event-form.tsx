@@ -21,6 +21,9 @@ interface EditEventFormProps {
         endDate: Date
         status: string
         notes?: string | null
+        deposit: number
+        transport: number
+        discount: number
         items: {
             productId: string
             quantity: number
@@ -48,6 +51,9 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
         endDate: format(new Date(event.endDate), 'yyyy-MM-dd'),
         status: event.status,
         notes: event.notes || '',
+        deposit: event.deposit?.toString() || '',
+        transport: event.transport?.toString() || '',
+        discount: event.discount?.toString() || '',
     })
 
     // State for items
@@ -64,8 +70,11 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
     const [selectedProductId, setSelectedProductId] = useState<string>("")
 
     const totalCost = useMemo(() => {
-        return items.reduce((acc, item) => acc + (item.quantity * item.priceUnit), 0)
-    }, [items])
+        const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.priceUnit), 0)
+        const subWithTrans = subtotal + (formData.transport ? parseFloat(formData.transport) : 0)
+        const withDiscount = subWithTrans * (1 - (formData.discount ? parseFloat(formData.discount) : 0) / 100)
+        return withDiscount - (formData.deposit ? parseFloat(formData.deposit) : 0)
+    }, [items, formData.deposit, formData.transport, formData.discount])
 
     const handleSubmit = async (shouldPrint: boolean = false) => {
         setLoading(true)
@@ -81,6 +90,9 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
             endDate: new Date(formData.endDate),
             status: formData.status,
             notes: formData.notes || undefined,
+            deposit: formData.deposit ? parseFloat(formData.deposit) : 0,
+            transport: formData.transport ? parseFloat(formData.transport) : 0,
+            discount: formData.discount ? parseFloat(formData.discount) : 0,
             items: validItems
         })
 
@@ -140,7 +152,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                 <CardTitle>Información de la Reserva</CardTitle>
             </CardHeader>
             <form>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 px-4 md:px-6">
                     <div className="grid gap-2">
                         <Label htmlFor="name">Nombre del Evento *</Label>
                         <Input
@@ -151,7 +163,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="startDate">Fecha de Inicio *</Label>
                             <Input
@@ -174,7 +186,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                         </div>
                     </div>
 
-                    <div className="pt-4 pb-2 flex justify-between items-center">
+                    <div className="pt-4 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <h3 className="text-lg font-medium">Artículos Reservados</h3>
                             <p className="text-sm text-gray-500">
@@ -183,18 +195,18 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                                     : "No se pueden modificar artículos en este estado."}
                             </p>
                         </div>
-                        <div className="text-right">
-                            <div className="text-sm text-gray-500">Total Estimado</div>
-                            <div className="text-2xl font-bold text-primary">
+                        <div className="text-left sm:text-right w-full sm:w-auto">
+                            <div className="text-xs sm:text-sm text-gray-500">Total Estimado</div>
+                            <div className="text-xl sm:text-2xl font-bold text-primary">
                                 ${totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                             </div>
                         </div>
                     </div>
 
                     {isEditable && (
-                        <div className="flex gap-2 items-end border p-4 rounded-md bg-muted/20">
+                        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end border p-4 rounded-md bg-muted/20">
                             <div className="grid gap-2 flex-1">
-                                <Label htmlFor="addProduct">Agregar Producto</Label>
+                                <Label htmlFor="addProduct text-xs">Agregar Producto</Label>
                                 <Select
                                     value={selectedProductId}
                                     onValueChange={setSelectedProductId}
@@ -203,8 +215,8 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                                     <SelectTrigger id="addProduct">
                                         <SelectValue placeholder={
                                             availableProducts.length === 0
-                                                ? "Todos los productos han sido agregados"
-                                                : "Seleccionar producto..."
+                                                ? "Todos los productos agregados"
+                                                : "Seleccionar..."
                                         } />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -216,7 +228,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button type="button" onClick={handleAddItem} disabled={!selectedProductId}>
+                            <Button type="button" onClick={handleAddItem} disabled={!selectedProductId} className="w-full sm:w-auto">
                                 <Plus className="w-4 h-4 mr-2" /> Agregar
                             </Button>
                         </div>
@@ -229,23 +241,23 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                             </div>
                         )}
                         {items.map((item) => (
-                            <div key={item.productId} className="flex items-center justify-between border p-3 rounded-md bg-card">
-                                <div>
-                                    <div className="font-medium">{item.productName}</div>
-                                    <div className="text-sm text-gray-500">Unit: ${item.priceUnit}</div>
+                            <div key={item.productId} className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border p-3 rounded-md bg-card gap-3">
+                                <div className="min-w-0">
+                                    <div className="font-medium truncate" title={item.productName}>{item.productName}</div>
+                                    <div className="text-xs text-gray-500">Unit: ${item.priceUnit}</div>
                                 </div>
-                                <div className="flex items-center space-x-4">
-                                    <div className="text-right w-24">
-                                        <div className="font-semibold">
+                                <div className="flex items-center justify-between sm:justify-end gap-3">
+                                    <div className="text-right w-auto sm:w-24 shrink-0">
+                                        <div className="font-semibold text-sm">
                                             ${(item.quantity * item.priceUnit).toLocaleString('es-MX')}
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Label htmlFor={`qty-${item.productId}`} className="sr-only">Cantidad</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Label htmlFor={`qty-${item.productId}`} className="sr-only">Cant.</Label>
                                         <Input
                                             id={`qty-${item.productId}`}
                                             type="number"
-                                            className="w-20 text-right"
+                                            className="w-16 sm:w-20 h-8 sm:h-10 text-right"
                                             value={item.quantity}
                                             onChange={(e) => handleQuantityChange(item.productId, e.target.value)}
                                             disabled={!isEditable}
@@ -256,7 +268,7 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                className="text-destructive hover:text-destructive/90"
+                                                className="h-8 w-8 sm:h-10 sm:w-10 text-destructive hover:text-destructive/90"
                                                 onClick={() => handleRemoveItem(item.productId)}
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -284,6 +296,44 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                         </Select>
                     </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="deposit">Depósito</Label>
+                            <Input
+                                id="deposit"
+                                type="text"
+                                value={formData.deposit}
+                                onChange={(e) => setFormData({ ...formData, deposit: e.target.value.replace(/[^0-9.]/g, '') })}
+                                placeholder="0.00"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="transport">Transporte</Label>
+                            <Input
+                                id="transport"
+                                type="text"
+                                value={formData.transport}
+                                onChange={(e) => setFormData({ ...formData, transport: e.target.value.replace(/[^0-9.]/g, '') })}
+                                placeholder="0.00"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="discount">Descuento (%)</Label>
+                            <Input
+                                id="discount"
+                                type="text"
+                                value={formData.discount}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9.]/g, '')
+                                    if (val === '' || (parseFloat(val) >= 0 && parseFloat(val) <= 100)) {
+                                        setFormData({ ...formData, discount: val })
+                                    }
+                                }}
+                                placeholder="0"
+                            />
+                        </div>
+                    </div>
+
                     <div className="grid gap-2">
                         <Label htmlFor="notes">Notas</Label>
                         <Textarea
@@ -291,20 +341,20 @@ export function EditEventForm({ event, allProducts }: EditEventFormProps) {
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             rows={4}
-                            placeholder="Notas adicionales sobre la reserva..."
+                            placeholder="Notas adicionales..."
                         />
                     </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                    <Button type="button" variant="outline" onClick={() => router.push('/events')}>
+                <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+                    <Button type="button" variant="outline" onClick={() => router.push('/events')} className="w-full sm:w-auto order-2 sm:order-1">
                         Cancelar
                     </Button>
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" disabled={loading} onClick={() => handleSubmit(false)}>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto order-1 sm:order-2">
+                        <Button type="button" variant="outline" disabled={loading} onClick={() => handleSubmit(false)} className="w-full sm:w-auto">
                             <Save className="mr-2 h-4 w-4" />
                             {loading ? 'Guardando...' : 'Solo Guardar'}
                         </Button>
-                        <Button type="button" disabled={loading} onClick={() => handleSubmit(true)}>
+                        <Button type="button" disabled={loading} onClick={() => handleSubmit(true)} className="w-full sm:w-auto">
                             <Printer className="mr-2 h-4 w-4" />
                             {loading ? 'Guardando...' : 'Guardar e Imprimir'}
                         </Button>

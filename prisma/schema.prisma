@@ -26,6 +26,8 @@ model Product {
   id               String      @id @default(cuid())
   name             String
   category         String?
+  subcategory      String?
+  novedad          String?
   description      String?
   imageUrl         String?
   totalQuantity    Int         @default(0)
@@ -47,6 +49,8 @@ model Event {
   status    String      @default("SIN_CONFIRMAR") // SIN_CONFIRMAR, RESERVADO, DESPACHADO, COMPLETADO, CANCELADO
   notes     String?
   deposit   Float       @default(0.0)
+  transport Float       @default(0.0)
+  discount  Float       @default(0.0)
   items     EventItem[]
   history   EventHistory[]
   clientId  String?

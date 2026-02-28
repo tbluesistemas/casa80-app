@@ -38,8 +38,11 @@ export function Sidebar({ onLinkClick, className }: SidebarProps) {
 
     return (
         <div className={cn("flex h-full w-64 flex-col border-r bg-background", className)}>
-            <div className="flex h-16 items-center px-6 font-bold text-xl border-b">
-                Casa80
+            <div className="flex flex-col items-center px-6 py-4 border-b gap-2">
+                <img src="/logo.png" alt="Casa80 Logo" className="h-16 w-auto object-contain" />
+                <div className="text-[9px] leading-tight text-muted-foreground font-semibold uppercase tracking-wider text-center">
+                    El ALIADO perfecto para tus eventos!
+                </div>
             </div>
             <div className="flex-1 overflow-y-auto py-4">
                 <nav className="grid gap-1 px-2">

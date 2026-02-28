@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { ExportButton } from "@/components/export/export-button"
 import { ImportInventoryButton } from "@/components/import/import-inventory-button"
 import { HistoryDialog } from "@/components/inventory/history-dialog"
@@ -20,14 +21,18 @@ import { ProductDetailsDialog } from "@/components/product-details-dialog"
 import { EditProductDialog } from "@/components/inventory/edit-product-dialog"
 import { CreateProductDialog } from "@/components/inventory/create-product-dialog"
 import { DeleteProductDialog } from "@/components/inventory/delete-product-dialog"
+import { deleteProduct } from "@/lib/actions"
 import { format } from "date-fns"
-import { Search, Eye, EyeOff, DollarSign, AlertTriangle } from "lucide-react"
+import { Search, Eye, EyeOff, DollarSign, AlertTriangle, Trash2, X, ArrowUpDown } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 interface Product {
     id: string
     name: string
     category?: string | null
+    subcategory?: string | null
+    novedad?: string | null
     description?: string | null
     totalQuantity: number
     quantityDamaged: number
@@ -40,35 +45,110 @@ interface Product {
 
 import { useAuth } from '@/components/auth-provider'
 
+type SortOption =
+    | 'name-asc' | 'name-desc'
+    | 'quantity-asc' | 'quantity-desc'
+    | 'price-asc' | 'price-desc'
+    | 'date-asc' | 'date-desc'
+
 export function InventoryClient({ products }: { products: Product[] }) {
     const { role } = useAuth()
     const [searchQuery, setSearchQuery] = useState('')
     const [categoryFilter, setCategoryFilter] = useState<string>('all')
-    const [showTotalValue, setShowTotalValue] = useState(false)
+    const [sortBy, setSortBy] = useState<SortOption>('name-asc')
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [deletingBulk, setDeletingBulk] = useState(false)
+    const [displayLimit, setDisplayLimit] = useState(50)
 
-    // Calculate total inventory value
     const totalInventoryValue = useMemo(() => {
         return products.reduce((acc, product) => {
             return acc + (product.totalQuantity * (product.priceUnit || 0))
         }, 0)
     }, [products])
 
-    // Get unique categories
     const categories = useMemo(() => {
         const cats = new Set(products.map(p => p.category || 'General'))
         return Array.from(cats).sort()
     }, [products])
 
-    // Filter products
-    const filteredProducts = useMemo(() => {
-        return products.filter(product => {
-            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredAndSorted = useMemo(() => {
+        const filtered = products.filter(product => {
+            const matchesSearch =
+                product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.subcategory?.toLowerCase().includes(searchQuery.toLowerCase())
             const matchesCategory = categoryFilter === 'all' ||
                 (product.category || 'General') === categoryFilter
             return matchesSearch && matchesCategory
         })
-    }, [products, searchQuery, categoryFilter])
+
+        return [...filtered].sort((a, b) => {
+            switch (sortBy) {
+                case 'name-asc': return a.name.localeCompare(b.name, 'es')
+                case 'name-desc': return b.name.localeCompare(a.name, 'es')
+                case 'quantity-asc': return a.totalQuantity - b.totalQuantity
+                case 'quantity-desc': return b.totalQuantity - a.totalQuantity
+                case 'price-asc': return (a.priceUnit || 0) - (b.priceUnit || 0)
+                case 'price-desc': return (b.priceUnit || 0) - (a.priceUnit || 0)
+                case 'date-asc': return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+                case 'date-desc': return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+                default: return 0
+            }
+        })
+    }, [products, searchQuery, categoryFilter, sortBy])
+
+    const visibleProducts = useMemo(() => {
+        return filteredAndSorted.slice(0, displayLimit)
+    }, [filteredAndSorted, displayLimit])
+
+    const hasMore = displayLimit < filteredAndSorted.length
+
+    const handleLoadMore = () => {
+        setDisplayLimit(prev => prev + 50)
+    }
+
+    // Selection helpers
+    const allFilteredSelected = filteredAndSorted.length > 0 &&
+        filteredAndSorted.every(p => selectedIds.has(p.id))
+    const someSelected = selectedIds.size > 0
+    const indeterminate = someSelected && !allFilteredSelected
+
+    const toggleSelectAll = () => {
+        if (allFilteredSelected) {
+            setSelectedIds(new Set())
+        } else {
+            setSelectedIds(new Set(filteredAndSorted.map(p => p.id)))
+        }
+    }
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
+    }
+
+    const clearSelection = () => setSelectedIds(new Set())
+
+    const handleBulkDelete = async () => {
+        if (!window.confirm(`¿Eliminar ${selectedIds.size} producto(s)? Esta acción no se puede deshacer.`)) return
+        setDeletingBulk(true)
+        let errors = 0
+        for (const id of selectedIds) {
+            const result = await deleteProduct(id)
+            if (!result.success) errors++
+        }
+        setDeletingBulk(false)
+        clearSelection()
+        if (errors > 0) {
+            toast.error(`${errors} producto(s) no pudieron eliminarse (probablemente tienen eventos asociados)`)
+        } else {
+            toast.success('Productos eliminados correctamente')
+        }
+    }
 
     return (
         <div className="flex-1 space-y-4 md:space-y-8 p-4 md:p-8 pt-4 md:pt-6">
@@ -76,32 +156,7 @@ export function InventoryClient({ products }: { products: Product[] }) {
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Inventario</h2>
                 <div className="flex items-center gap-4">
                     {role === 'ADMIN' && (
-                        <Card className="bg-muted/30 border-muted">
-                            <CardContent className="p-2 px-4 flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-full">
-                                    <DollarSign className="h-4 w-4 text-primary" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                                        Valor Total
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-lg tabular-nums">
-                                            {showTotalValue
-                                                ? `$${totalInventoryValue.toLocaleString()}`
-                                                : "•••••••"}
-                                        </span>
-                                        <button
-                                            onClick={() => setShowTotalValue(!showTotalValue)}
-                                            className="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
-                                            aria-label={showTotalValue ? "Ocultar valor" : "Mostrar valor"}
-                                        >
-                                            {showTotalValue ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                                        </button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <TotalValueCard totalValue={totalInventoryValue} />
                     )}
                     <div className="flex gap-2 bg-muted/50 p-1 rounded-lg w-fit h-fit">
                         <Link href="/inventory/damages">
@@ -117,11 +172,43 @@ export function InventoryClient({ products }: { products: Product[] }) {
                 </div>
             </div>
 
+            {/* Bulk action bar */}
+            {someSelected && (
+                <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                    <span className="text-sm font-semibold text-primary">
+                        {selectedIds.size} producto{selectedIds.size !== 1 ? 's' : ''} seleccionado{selectedIds.size !== 1 ? 's' : ''}
+                    </span>
+                    <div className="flex-1" />
+                    {role === 'ADMIN' && (
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleBulkDelete}
+                            disabled={deletingBulk}
+                            className="gap-2"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            {deletingBulk ? 'Eliminando...' : 'Eliminar seleccionados'}
+                        </Button>
+                    )}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearSelection}
+                        className="gap-1"
+                    >
+                        <X className="h-4 w-4" />
+                        Deseleccionar
+                    </Button>
+                </div>
+            )}
+
             <Card>
                 <CardHeader>
                     <div className="flex flex-col gap-4">
                         <CardTitle>Productos Disponibles</CardTitle>
                         <div className="flex flex-col sm:flex-row gap-3">
+                            {/* Search */}
                             <div className="relative flex-1 sm:max-w-xs">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -131,6 +218,7 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                     className="pl-8"
                                 />
                             </div>
+                            {/* Category filter */}
                             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                                 <SelectTrigger className="w-full sm:w-[180px]">
                                     <SelectValue placeholder="Categoría" />
@@ -142,90 +230,281 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {/* Sort */}
+                            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                                <SelectTrigger className="w-full sm:w-[200px]">
+                                    <ArrowUpDown className="h-4 w-4 mr-2 text-muted-foreground" />
+                                    <SelectValue placeholder="Ordenar por" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="name-asc">Nombre A → Z</SelectItem>
+                                    <SelectItem value="name-desc">Nombre Z → A</SelectItem>
+                                    <SelectItem value="quantity-desc">Cantidad ↓ Mayor</SelectItem>
+                                    <SelectItem value="quantity-asc">Cantidad ↑ Menor</SelectItem>
+                                    <SelectItem value="price-desc">Precio ↓ Mayor</SelectItem>
+                                    <SelectItem value="price-asc">Precio ↑ Menor</SelectItem>
+                                    <SelectItem value="date-desc">Más reciente primero</SelectItem>
+                                    <SelectItem value="date-asc">Más antiguo primero</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0 sm:p-6">
-                    <div className="overflow-x-auto">
+                <CardContent className="p-0">
+                    {/* Mobile: Cards */}
+                    <div className="md:hidden divide-y">
+                        {visibleProducts.length === 0 ? (
+                            <p className="text-center text-muted-foreground py-12">
+                                {searchQuery || categoryFilter !== 'all' ? 'No se encontraron productos con esos filtros.' : 'No hay productos registrados.'}
+                            </p>
+                        ) : visibleProducts.map((product) => (
+                            <div key={product.id} className="p-4 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                        <Checkbox
+                                            checked={selectedIds.has(product.id)}
+                                            onCheckedChange={() => toggleSelect(product.id)}
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            {role === 'ADMIN' ? (
+                                                <EditProductDialog product={product}>
+                                                    <span className="font-semibold text-primary text-sm hover:underline cursor-pointer block truncate">{product.name}</span>
+                                                </EditProductDialog>
+                                            ) : (
+                                                <ProductDetailsDialog product={product}>
+                                                    <span className="font-semibold text-sm hover:underline cursor-pointer block truncate">{product.name}</span>
+                                                </ProductDetailsDialog>
+                                            )}
+                                            {product.category && (
+                                                <span className="text-xs text-muted-foreground">{product.category}{product.subcategory ? ` · ${product.subcategory}` : ''}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1 shrink-0">
+                                        {role === 'ADMIN' && <DeleteProductDialog productId={product.id} productName={product.name} />}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/30 rounded-lg p-2">
+                                    <div>
+                                        <div className="font-bold text-base">{product.totalQuantity}</div>
+                                        <div className="text-muted-foreground">Total</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-base text-green-600">
+                                            {product.availableQuantity !== undefined ? product.availableQuantity : (product.totalQuantity - (product.quantityDamaged || 0))}
+                                        </div>
+                                        <div className="text-muted-foreground">Disponible</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-base text-red-600">{product.quantityDamaged || 0}</div>
+                                        <div className="text-muted-foreground">Dañado</div>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>Unit: <strong className="text-foreground">${(product.priceUnit || 0).toLocaleString()}</strong></span>
+                                    <span>Daño: <strong className="text-foreground">${product.priceReplacement.toLocaleString()}</strong></span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop: Table */}
+                    <div className="hidden md:block overflow-x-auto px-6">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="min-w-[80px]">Cat.</TableHead>
+                                    <TableHead className="w-10">
+                                        <Checkbox
+                                            checked={allFilteredSelected}
+                                            onCheckedChange={toggleSelectAll}
+                                            aria-label="Seleccionar todos"
+                                            // indeterminate state via data attr
+                                            data-state={indeterminate ? 'indeterminate' : allFilteredSelected ? 'checked' : 'unchecked'}
+                                        />
+                                    </TableHead>
+                                    <TableHead className="w-[160px] max-w-[160px]">Categoría</TableHead>
                                     <TableHead className="min-w-[200px]">Nombre / Descripción</TableHead>
-                                    <TableHead className="text-right min-w-[80px]">Total</TableHead>
-                                    <TableHead className="text-right min-w-[80px]">Disponible</TableHead>
-                                    <TableHead className="text-right min-w-[80px] text-red-600">Dañado</TableHead>
-                                    <TableHead className="text-right min-w-[100px]">Valor Unitario</TableHead>
-                                    <TableHead className="text-right min-w-[100px]">Valor Daño</TableHead>
-                                    <TableHead className="text-right min-w-[140px]">Última Actualización</TableHead>
-                                    <TableHead className="min-w-[100px]"></TableHead>
+                                    <TableHead className="text-right w-[70px]">Total</TableHead>
+                                    <TableHead className="text-right w-[80px]">Disponible</TableHead>
+                                    <TableHead className="text-right w-[70px] text-red-600">Dañado</TableHead>
+                                    <TableHead className="text-right w-[110px]">Valor Unit.</TableHead>
+                                    <TableHead className="text-right w-[100px]">Valor Daño</TableHead>
+                                    <TableHead className="text-right w-[130px]">Actualización</TableHead>
+                                    <TableHead className="w-[100px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredProducts.length === 0 ? (
+                                {visibleProducts.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                                        <TableCell colSpan={10} className="text-center h-24 text-muted-foreground">
                                             {searchQuery || categoryFilter !== 'all'
                                                 ? 'No se encontraron productos con esos filtros.'
                                                 : 'No hay productos registrados.'}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredProducts.map((product) => (
-                                        <TableRow key={product.id}>
-                                            <TableCell>
-                                                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                                    {product.category || 'General'}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <ProductDetailsDialog product={product}>
-                                                    <div className="flex flex-col cursor-pointer hover:underline decoration-dotted decoration-muted-foreground/50">
-                                                        <span className="font-medium text-primary">{product.name}</span>
-                                                        {product.description && (
-                                                            <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                                                {product.description}
+                                    visibleProducts.map((product) => {
+                                        const isSelected = selectedIds.has(product.id)
+                                        return (
+                                            <TableRow
+                                                key={product.id}
+                                                data-selected={isSelected}
+                                                className={isSelected ? 'bg-primary/5' : ''}
+                                            >
+                                                <TableCell>
+                                                    <Checkbox
+                                                        checked={isSelected}
+                                                        onCheckedChange={() => toggleSelect(product.id)}
+                                                        aria-label={`Seleccionar ${product.name}`}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="w-[160px] max-w-[160px]">
+                                                    <div className="flex flex-col gap-1 max-w-full">
+                                                        <span
+                                                            title={product.category || 'General'}
+                                                            className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 max-w-full truncate block"
+                                                        >
+                                                            {product.category || 'General'}
+                                                        </span>
+                                                        {product.subcategory && (
+                                                            <span
+                                                                title={product.subcategory}
+                                                                className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10 max-w-full truncate block"
+                                                            >
+                                                                {product.subcategory}
+                                                            </span>
+                                                        )}
+                                                        {product.novedad && (
+                                                            <span
+                                                                title={product.novedad}
+                                                                className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10 max-w-full truncate block"
+                                                            >
+                                                                {product.novedad}
                                                             </span>
                                                         )}
                                                     </div>
-                                                </ProductDetailsDialog>
-                                            </TableCell>
-                                            <TableCell className="text-right font-bold text-muted-foreground">{product.totalQuantity}</TableCell>
-                                            <TableCell className="text-right font-bold text-green-600">
-                                                {product.availableQuantity !== undefined
-                                                    ? product.availableQuantity
-                                                    : (product.totalQuantity - (product.quantityDamaged || 0))}
-                                            </TableCell>
-                                            <TableCell className="text-right font-bold text-red-600">
-                                                {product.quantityDamaged || 0}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                ${(product.priceUnit || 0).toFixed(0)}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                ${product.priceReplacement.toFixed(0)}
-                                            </TableCell>
-                                            <TableCell className="text-right text-muted-foreground text-xs">
-                                                {format(new Date(product.updatedAt), "dd/MM/yyyy HH:mm")}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-1">
-                                                    {role === 'ADMIN' && <EditProductDialog product={product} />}
-                                                    {role === 'ADMIN' && <DeleteProductDialog productId={product.id} productName={product.name} />}
-                                                    <HistoryDialog
-                                                        productId={product.id}
-                                                        productName={product.name}
-                                                    />
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                                </TableCell>
+                                                <TableCell>
+                                                    {role === 'ADMIN' ? (
+                                                        <EditProductDialog product={product}>
+                                                            <div className="flex flex-col cursor-pointer">
+                                                                <span className="font-medium text-primary hover:underline underline-offset-2">{product.name}</span>
+                                                                {product.description && (
+                                                                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                                        {product.description}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </EditProductDialog>
+                                                    ) : (
+                                                        <ProductDetailsDialog product={product}>
+                                                            <div className="flex flex-col cursor-pointer hover:underline decoration-dotted decoration-muted-foreground/50">
+                                                                <span className="font-medium text-primary">{product.name}</span>
+                                                                {product.description && (
+                                                                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                                        {product.description}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </ProductDetailsDialog>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold text-muted-foreground">{product.totalQuantity}</TableCell>
+                                                <TableCell className="text-right font-bold text-green-600">
+                                                    {product.availableQuantity !== undefined
+                                                        ? product.availableQuantity
+                                                        : (product.totalQuantity - (product.quantityDamaged || 0))}
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold text-red-600">
+                                                    {product.quantityDamaged || 0}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    ${(product.priceUnit || 0).toFixed(0)}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    ${product.priceReplacement.toFixed(0)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-muted-foreground text-xs">
+                                                    {format(new Date(product.updatedAt), "dd/MM/yyyy HH:mm")}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-1">
+                                                        {role === 'ADMIN' && <DeleteProductDialog productId={product.id} productName={product.name} />}
+                                                        <HistoryDialog
+                                                            productId={product.id}
+                                                            productName={product.name}
+                                                        />
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })
                                 )}
                             </TableBody>
                         </Table>
                     </div>
+
+                    {/* Footer summary */}
+                    {filteredAndSorted.length > 0 && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-muted-foreground">
+                            <span>
+                                {filteredAndSorted.length} producto{filteredAndSorted.length !== 1 ? 's' : ''}
+                                {searchQuery || categoryFilter !== 'all' ? ' (filtrados)' : ''}
+                            </span>
+                            {someSelected && (
+                                <span className="text-primary font-medium">
+                                    {selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    {hasMore && (
+                        <div className="flex justify-center py-6 border-t bg-muted/10">
+                            <Button
+                                variant="outline"
+                                onClick={handleLoadMore}
+                                className="gap-2 px-8"
+                            >
+                                <ArrowUpDown className="h-4 w-4" />
+                                Cargar 50 productos más ({filteredAndSorted.length - visibleProducts.length} restantes)
+                            </Button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
+    )
+}
+
+function TotalValueCard({ totalValue }: { totalValue: number }) {
+    const [showValue, setShowValue] = useState(false)
+
+    return (
+        <Card className="bg-muted/30 border-muted">
+            <CardContent className="p-2 px-4 flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-full">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                        Valor Total
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg tabular-nums">
+                            {showValue
+                                ? `$${totalValue.toLocaleString()}`
+                                : "•••••••"}
+                        </span>
+                        <button
+                            onClick={() => setShowValue(!showValue)}
+                            className="text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                            aria-label={showValue ? "Ocultar valor" : "Mostrar valor"}
+                        >
+                            {showValue ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     )
 }

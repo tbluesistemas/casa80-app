@@ -69,69 +69,72 @@ export default function DamagedProductsPage() {
     }, 0)
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="flex items-center gap-3">
+        <div className="flex-1 space-y-4 md:space-y-8 p-4 md:p-8 pt-4 md:pt-6">
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-2">
                         <Link href="/inventory">
-                            <Button variant="ghost" size="icon">
-                                <ArrowLeft className="h-5 w-5" />
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <ArrowLeft className="h-4 w-4" />
                             </Button>
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold tracking-tight">Historial de Productos Dañados</h2>
-                            <p className="text-muted-foreground">
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Historial de Daños</h2>
+                            <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">
                                 Gestiona y rastrea productos dañados y su restauración
                             </p>
                         </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <ExportButton segment="damages" />
-                    <div className="flex flex-col items-end gap-2">
-                        <div className="text-sm text-muted-foreground">Costo Total Pendiente</div>
-                        <div className="text-2xl font-bold text-red-600">
-                            {formatCurrency(totalCost)}
+                    <div className="flex items-center justify-between sm:justify-end gap-4 bg-red-50 p-3 rounded-lg border border-red-100">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] uppercase font-bold text-red-600">Total Pendiente</span>
+                            <div className="text-lg md:text-2xl font-bold text-red-700">
+                                {formatCurrency(totalCost)}
+                            </div>
                         </div>
+                        <ExportButton segment="damages" />
                     </div>
                 </div>
             </div>
 
             <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
+                <CardHeader className="px-4 md:px-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <CardTitle>Productos Dañados</CardTitle>
-                            <CardDescription>
-                                {items.length} {items.length === 1 ? 'producto' : 'productos'} en el historial
+                            <CardTitle className="text-lg md:text-xl">Productos Dañados</CardTitle>
+                            <CardDescription className="text-xs md:text-sm">
+                                {items.length} registrados
                             </CardDescription>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1 bg-muted p-1 rounded-md self-start md:self-auto">
                             <Button
-                                variant={filter === 'all' ? 'default' : 'outline'}
+                                variant={filter === 'all' ? 'secondary' : 'ghost'}
                                 size="sm"
                                 onClick={() => setFilter('all')}
+                                className="h-7 text-xs px-2"
                             >
                                 Todos
                             </Button>
                             <Button
-                                variant={filter === 'pending' ? 'default' : 'outline'}
+                                variant={filter === 'pending' ? 'secondary' : 'ghost'}
                                 size="sm"
                                 onClick={() => setFilter('pending')}
+                                className="h-7 text-xs px-2"
                             >
                                 Pendientes
                             </Button>
                             <Button
-                                variant={filter === 'restored' ? 'default' : 'outline'}
+                                variant={filter === 'restored' ? 'secondary' : 'ghost'}
                                 size="sm"
                                 onClick={() => setFilter('restored')}
+                                className="h-7 text-xs px-2"
                             >
                                 Restaurados
                             </Button>
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 md:p-6">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <div className="flex flex-col items-center gap-3">
@@ -140,7 +143,7 @@ export default function DamagedProductsPage() {
                             </div>
                         </div>
                     ) : items.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="flex flex-col items-center justify-center py-12 text-center p-4">
                             <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
                             <p className="text-lg font-medium">No hay productos dañados</p>
                             <p className="text-sm text-muted-foreground">
@@ -150,80 +153,148 @@ export default function DamagedProductsPage() {
                             </p>
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Producto</TableHead>
-                                    <TableHead className="text-center">Cantidad</TableHead>
-                                    <TableHead>Evento</TableHead>
-                                    <TableHead>Cliente</TableHead>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead className="text-right">Costo</TableHead>
-                                    <TableHead className="text-center">Estado</TableHead>
-                                    <TableHead className="text-right">Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
+                        <>
+                            {/* Mobile View: Cards */}
+                            <div className="md:hidden divide-y">
                                 {items.map((item) => {
                                     const cost = item.returnedDamaged * item.product.priceReplacement
                                     return (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium">
-                                                {item.product.name}
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                {item.returnedDamaged}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Link href={`/events/${item.event.id}`} className="hover:underline text-primary">
-                                                    {item.event.name}
-                                                </Link>
-                                            </TableCell>
-                                            <TableCell>
-                                                {item.event.client?.name || 'Sin cliente'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatDate(item.event.endDate)}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                {formatCurrency(cost)}
-                                            </TableCell>
-                                            <TableCell className="text-center">
+                                        <div key={item.id} className="p-4 space-y-3">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-sm truncate">{item.product.name}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Cant: <strong className="text-foreground">{item.returnedDamaged}</strong> ·
+                                                        Costo: <strong className="text-red-600">{formatCurrency(cost)}</strong>
+                                                    </div>
+                                                </div>
                                                 {item.damageRestored ? (
-                                                    <Badge variant="outline" className="gap-1 bg-green-500/10 text-green-600 border-green-600/20">
-                                                        <CheckCircle2 className="h-3 w-3" />
+                                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
                                                         Restaurado
                                                     </Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="gap-1 bg-red-500/10 text-red-600 border-red-600/20">
-                                                        <AlertTriangle className="h-3 w-3" />
+                                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-50 text-red-700 border-red-200">
                                                         Pendiente
                                                     </Badge>
                                                 )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {!item.damageRestored && (
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-muted-foreground">Evento</span>
+                                                    <Link href={`/events/${item.event.id}`} className="text-primary truncate font-medium">
+                                                        {item.event.name}
+                                                    </Link>
+                                                </div>
+                                                <div className="flex flex-col gap-0.5 text-right">
+                                                    <span className="text-muted-foreground">Fecha Evento</span>
+                                                    <span>{formatDate(item.event.endDate)}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-between items-center pt-1 border-t">
+                                                <div className="text-[11px] text-muted-foreground truncate max-w-[150px]">
+                                                    {item.event.client?.name || 'Sin cliente'}
+                                                </div>
+                                                {!item.damageRestored ? (
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => handleRestore(item.id)}
-                                                        className="gap-2"
+                                                        className="h-7 text-[10px] gap-1 px-2"
                                                     >
-                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        <CheckCircle2 className="h-3 w-3" />
                                                         Restaurar
                                                     </Button>
-                                                )}
-                                                {item.damageRestored && item.restoredAt && (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {formatDate(item.restoredAt)}
+                                                ) : item.restoredAt && (
+                                                    <span className="text-[10px] text-muted-foreground italic">
+                                                        Restaurado: {formatDate(item.restoredAt)}
                                                     </span>
                                                 )}
-                                            </TableCell>
-                                        </TableRow>
+                                            </div>
+                                        </div>
                                     )
                                 })}
-                            </TableBody>
-                        </Table>
+                            </div>
+
+                            {/* Desktop View: Table */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Producto</TableHead>
+                                            <TableHead className="text-center">Cantidad</TableHead>
+                                            <TableHead>Evento</TableHead>
+                                            <TableHead>Cliente</TableHead>
+                                            <TableHead>Fecha</TableHead>
+                                            <TableHead className="text-right">Costo</TableHead>
+                                            <TableHead className="text-center">Estado</TableHead>
+                                            <TableHead className="text-right">Acciones</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {items.map((item) => {
+                                            const cost = item.returnedDamaged * item.product.priceReplacement
+                                            return (
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="font-medium">
+                                                        {item.product.name}
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        {item.returnedDamaged}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Link href={`/events/${item.event.id}`} className="hover:underline text-primary">
+                                                            {item.event.name}
+                                                        </Link>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {item.event.client?.name || 'Sin cliente'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {formatDate(item.event.endDate)}
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-medium text-red-600">
+                                                        {formatCurrency(cost)}
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        {item.damageRestored ? (
+                                                            <Badge variant="outline" className="gap-1 bg-green-500/10 text-green-600 border-green-600/20">
+                                                                <CheckCircle2 className="h-3 w-3" />
+                                                                Restaurado
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="gap-1 bg-red-500/10 text-red-600 border-red-600/20">
+                                                                <AlertTriangle className="h-3 w-3" />
+                                                                Pendiente
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {!item.damageRestored && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => handleRestore(item.id)}
+                                                                className="gap-2"
+                                                            >
+                                                                <CheckCircle2 className="h-4 w-4" />
+                                                                Restaurar
+                                                            </Button>
+                                                        )}
+                                                        {item.damageRestored && item.restoredAt && (
+                                                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                                {formatDate(item.restoredAt)}
+                                                            </span>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

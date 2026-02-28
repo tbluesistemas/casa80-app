@@ -15,12 +15,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { ModeToggle } from "@/components/mode-toggle";
-
 export const metadata: Metadata = {
   title: "Casa80 App",
   description: "Gestión de inventario y reservas",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 import { AuthProvider } from "@/components/auth-provider";
@@ -38,23 +38,12 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${styles.body}`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          storageKey="casa80-theme-v2"
-          disableTransitionOnChange
-        >
-          <AuthProvider initialRole={role}>
-            <AppShell>
-              {children}
-            </AppShell>
-            <div className="fixed bottom-10 right-6 z-50">
-              <ModeToggle />
-            </div>
-            <Toaster />
-          </AuthProvider>
-        </ThemeProvider>
+        <AuthProvider initialRole={role}>
+          <AppShell>
+            {children}
+          </AppShell>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

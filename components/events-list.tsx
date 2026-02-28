@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Eye, RotateCcw, Pencil, History } from "lucide-react";
+import { Eye, RotateCcw, Pencil } from "lucide-react";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { EventStatus } from "@/lib/event-status";
 import type { UserRole } from "@/lib/auth";
@@ -53,6 +53,7 @@ export function EventsList({ events, role }: { events: Event[], role: UserRole }
 
     return (
         <div className="space-y-4">
+            {/* Tabs */}
             <div className="flex space-x-2 border-b">
                 <button
                     onClick={() => setTab('active')}
@@ -61,7 +62,7 @@ export function EventsList({ events, role }: { events: Event[], role: UserRole }
                         : 'border-transparent text-muted-foreground hover:text-foreground'
                         }`}
                 >
-                    Reservas Activas ({activeEvents.length})
+                    Activas ({activeEvents.length})
                 </button>
                 <button
                     onClick={() => setTab('history')}
@@ -70,103 +71,176 @@ export function EventsList({ events, role }: { events: Event[], role: UserRole }
                         : 'border-transparent text-muted-foreground hover:text-foreground'
                         }`}
                 >
-                    Historial de Cambios
+                    Historial
                 </button>
             </div>
 
             {tab === 'active' ? (
-                <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="min-w-[150px]">Nombre</TableHead>
-                                <TableHead className="min-w-[120px]">Inicio</TableHead>
-                                <TableHead className="min-w-[120px]">Fin</TableHead>
-                                <TableHead className="min-w-[100px]">Estado</TableHead>
-                                <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {activeEvents.map((event) => (
-                                <TableRow key={event.id}>
-                                    <TableCell className="font-medium">
-                                        {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(event.status) ? (
-                                            <Link href={`/events/${event.id}/edit`} className="hover:underline text-primary font-semibold">
+                <>
+                    {/* Mobile: Cards */}
+                    <div className="md:hidden space-y-3">
+                        {activeEvents.length === 0 ? (
+                            <p className="text-center text-muted-foreground py-12">No hay reservas activas.</p>
+                        ) : activeEvents.map((event) => (
+                            <div key={event.id} className="rounded-lg border bg-card p-4 space-y-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        {role === 'ADMIN' ? (
+                                            <Link href={`/events/${event.id}/edit`} className="font-semibold text-primary hover:underline">
                                                 {event.name}
                                             </Link>
                                         ) : (
-                                            <Link href={`/events/${event.id}`} className="hover:underline">
+                                            <Link href={`/events/${event.id}`} className="font-semibold hover:underline">
                                                 {event.name}
                                             </Link>
                                         )}
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">{format(new Date(event.startDate), "PPP", { locale: es })}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{format(new Date(event.endDate), "PPP", { locale: es })}</TableCell>
-                                    <TableCell>
-                                        <EventStatusBadge status={event.status as EventStatus} />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(event.status) && (
-                                                <>
-                                                    <Link href={`/events/${event.id}/edit`}>
-                                                        <Button variant="ghost" size="icon" title="Editar Reserva">
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/events/${event.id}/return`}>
-                                                        <Button variant="ghost" size="icon" title="Registrar Devolución">
-                                                            <RotateCcw className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
-                                                </>
-                                            )}
-                                            <Link href={`/events/${event.id}`}>
-                                                <Button variant="ghost" size="icon" title="Ver Detalles">
-                                                    <Eye className="h-4 w-4" />
+                                        <div className="text-xs text-muted-foreground mt-1">
+                                            {format(new Date(event.startDate), "dd MMM", { locale: es })} → {format(new Date(event.endDate), "dd MMM yyyy", { locale: es })}
+                                        </div>
+                                    </div>
+                                    <EventStatusBadge status={event.status as EventStatus} />
+                                </div>
+                                <div className="flex gap-2 pt-1 border-t">
+                                    <Link href={`/events/${event.id}`} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
+                                            <Eye className="h-3 w-3" /> Ver
+                                        </Button>
+                                    </Link>
+                                    {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(event.status) && (
+                                        <>
+                                            <Link href={`/events/${event.id}/edit`} className="flex-1">
+                                                <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
+                                                    <Pencil className="h-3 w-3" /> Editar
                                                 </Button>
                                             </Link>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {activeEvents.length === 0 && (
+                                            <Link href={`/events/${event.id}/return`} className="flex-1">
+                                                <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
+                                                    <RotateCcw className="h-3 w-3" /> Dev.
+                                                </Button>
+                                            </Link>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop: Table */}
+                    <div className="hidden md:block rounded-md border overflow-x-auto">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                        No hay reservas activas.
-                                    </TableCell>
+                                    <TableHead className="min-w-[150px]">Nombre</TableHead>
+                                    <TableHead className="min-w-[120px]">Inicio</TableHead>
+                                    <TableHead className="min-w-[120px]">Fin</TableHead>
+                                    <TableHead className="min-w-[100px]">Estado</TableHead>
+                                    <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                            </TableHeader>
+                            <TableBody>
+                                {activeEvents.map((event) => (
+                                    <TableRow key={event.id}>
+                                        <TableCell className="font-medium">
+                                            {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(event.status) ? (
+                                                <Link href={`/events/${event.id}/edit`} className="hover:underline text-primary font-semibold">
+                                                    {event.name}
+                                                </Link>
+                                            ) : (
+                                                <Link href={`/events/${event.id}`} className="hover:underline">
+                                                    {event.name}
+                                                </Link>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">{format(new Date(event.startDate), "PPP", { locale: es })}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{format(new Date(event.endDate), "PPP", { locale: es })}</TableCell>
+                                        <TableCell>
+                                            <EventStatusBadge status={event.status as EventStatus} />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                {role === 'ADMIN' && ['SIN_CONFIRMAR', 'RESERVADO', 'DESPACHADO'].includes(event.status) && (
+                                                    <>
+                                                        <Link href={`/events/${event.id}/edit`}>
+                                                            <Button variant="ghost" size="icon" title="Editar Reserva">
+                                                                <Pencil className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                        <Link href={`/events/${event.id}/return`}>
+                                                            <Button variant="ghost" size="icon" title="Registrar Devolución">
+                                                                <RotateCcw className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                    </>
+                                                )}
+                                                <Link href={`/events/${event.id}`}>
+                                                    <Button variant="ghost" size="icon" title="Ver Detalles">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {activeEvents.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                            No hay reservas activas.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </>
             ) : (
-                <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="min-w-[150px]">Fecha</TableHead>
-                                <TableHead className="min-w-[150px]">Evento</TableHead>
-                                <TableHead className="min-w-[120px]">Cambio</TableHead>
-                                <TableHead className="min-w-[150px]">Usuario</TableHead>
-                                <TableHead className="min-w-[150px]">Notas</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loadingHistory ? (
+                <>
+                    {/* Mobile: History Cards */}
+                    <div className="md:hidden space-y-3">
+                        {loadingHistory ? (
+                            <p className="text-center text-muted-foreground py-12">Cargando historial...</p>
+                        ) : historyContainer.length === 0 ? (
+                            <p className="text-center text-muted-foreground py-12">No hay registros de historial.</p>
+                        ) : historyContainer.map((entry) => (
+                            <div key={entry.id} className="rounded-lg border bg-card p-4 space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="font-semibold text-sm">{entry.event.name}</span>
+                                    <EventStatusBadge status={entry.newStatus as EventStatus} />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {format(new Date(entry.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                                    {entry.changedBy && <> · {entry.changedBy}</>}
+                                </p>
+                                {entry.reason && <p className="text-xs text-muted-foreground">{entry.reason}</p>}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop: History Table */}
+                    <div className="hidden md:block rounded-md border overflow-x-auto">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                        Cargando historial...
-                                    </TableCell>
+                                    <TableHead className="min-w-[150px]">Fecha</TableHead>
+                                    <TableHead className="min-w-[150px]">Evento</TableHead>
+                                    <TableHead className="min-w-[120px]">Cambio</TableHead>
+                                    <TableHead className="min-w-[150px]">Usuario</TableHead>
+                                    <TableHead className="min-w-[150px]">Notas</TableHead>
                                 </TableRow>
-                            ) : historyContainer.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                        No hay registros de historial.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                historyContainer.map((entry) => (
+                            </TableHeader>
+                            <TableBody>
+                                {loadingHistory ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                            Cargando historial...
+                                        </TableCell>
+                                    </TableRow>
+                                ) : historyContainer.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                            No hay registros de historial.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : historyContainer.map((entry) => (
                                     <TableRow key={entry.id}>
                                         <TableCell className="whitespace-nowrap font-medium">
                                             {format(new Date(entry.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
@@ -186,11 +260,11 @@ export function EventsList({ events, role }: { events: Event[], role: UserRole }
                                         <TableCell className="text-sm text-muted-foreground">{entry.changedBy}</TableCell>
                                         <TableCell className="text-sm text-muted-foreground">{entry.reason || '-'}</TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </>
             )}
         </div>
     );

@@ -132,6 +132,8 @@ export async function getProducts(filters?: {
 export async function updateProduct(id: string, data: {
     name?: string
     category?: string | null
+    subcategory?: string | null
+    novedad?: string | null
     description?: string | null
     totalQuantity?: number
     quantityDamaged?: number
@@ -181,6 +183,8 @@ export async function updateProduct(id: string, data: {
 export async function createProduct(data: {
     name: string
     category?: string
+    subcategory?: string
+    novedad?: string
     description?: string
     totalQuantity?: number
     priceUnit?: number
@@ -195,6 +199,8 @@ export async function createProduct(data: {
             data: {
                 name: data.name,
                 category: data.category || null,
+                subcategory: data.subcategory || null,
+                novedad: data.novedad || null,
                 description: data.description || null,
                 totalQuantity: data.totalQuantity || 0,
                 priceUnit: data.priceUnit || 0,
@@ -215,6 +221,9 @@ export async function updateEvent(id: string, data: {
     endDate?: Date
     status?: string
     notes?: string
+    deposit?: number
+    transport?: number
+    discount?: number
     items?: { productId: string; quantity: number }[]
 }) {
     const role = await getCurrentRole()
@@ -280,7 +289,10 @@ export async function updateEvent(id: string, data: {
                     startDate: data.startDate,
                     endDate: data.endDate,
                     status: data.status,
-                    notes: data.notes
+                    notes: data.notes,
+                    deposit: data.deposit,
+                    transport: data.transport,
+                    discount: data.discount
                 }
             })
 
@@ -395,9 +407,11 @@ export async function createEvent(data: {
     clientId?: string
     notes?: string
     deposit?: number
+    transport?: number
+    discount?: number
     items: CreateEventItem[]
 }) {
-    const { name, startDate, endDate, items, clientId, deposit } = data
+    const { name, startDate, endDate, items, clientId, deposit, transport, discount } = data
 
     const role = await getCurrentRole()
     if (role !== 'ADMIN') {
@@ -429,6 +443,8 @@ export async function createEvent(data: {
                 notes: data.notes,
                 clientId: clientId, // Optional link
                 deposit: deposit || 0,
+                transport: transport || 0,
+                discount: discount || 0,
                 status: 'RESERVADO', // Estado inicial: Reservado
                 items: {
                     create: data.items.map((item) => ({
@@ -1546,6 +1562,8 @@ export async function getDamagedProductsForExport(filters?: {
 export async function importInventoryFromExcel(products: {
     name: string
     category?: string
+    subcategory?: string
+    novedad?: string
     description?: string
     totalQuantity: number
     priceUnit: number
@@ -1576,11 +1594,12 @@ export async function importInventoryFromExcel(products: {
                 })
 
                 if (existing) {
-                    // Actualizar producto existente
                     await prisma.product.update({
                         where: { id: existing.id },
                         data: {
                             category: productData.category,
+                            subcategory: productData.subcategory || null,
+                            novedad: productData.novedad || null,
                             description: productData.description,
                             totalQuantity: productData.totalQuantity,
                             priceUnit: productData.priceUnit,
@@ -1589,11 +1608,12 @@ export async function importInventoryFromExcel(products: {
                     })
                     results.updated++
                 } else {
-                    // Crear nuevo producto
                     await prisma.product.create({
                         data: {
                             name: productData.name,
                             category: productData.category,
+                            subcategory: productData.subcategory || null,
+                            novedad: productData.novedad || null,
                             description: productData.description,
                             totalQuantity: productData.totalQuantity,
                             priceUnit: productData.priceUnit,

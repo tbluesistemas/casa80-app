@@ -42,6 +42,8 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
     const [isAllDay, setIsAllDay] = useState(false)
     const [notes, setNotes] = useState('')
     const [deposit, setDeposit] = useState<string>('')
+    const [transport, setTransport] = useState<string>('')
+    const [discount, setDiscount] = useState<string>('')
 
     // Product State
     const [availableProducts, setAvailableProducts] = useState<Product[]>(initialProducts)
@@ -174,6 +176,8 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                 endDate: finalEndDate!,
                 notes,
                 deposit: deposit ? parseFloat(deposit) : 0,
+                transport: transport ? parseFloat(transport) : 0,
+                discount: discount ? parseFloat(discount) : 0,
                 items,
             })
 
@@ -186,6 +190,8 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                 setEndDate(undefined)
                 setNotes('')
                 setDeposit('')
+                setTransport('')
+                setDiscount('')
                 setCart({})
                 router.refresh()
                 // Redirect based on user choice
@@ -224,9 +230,9 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
     }, [cartItems])
 
     return (
-        <div className="flex h-[calc(100vh-140px)] gap-6">
+        <div className="flex flex-col md:flex-row md:h-[calc(100vh-140px)] gap-6">
             {/* LEFT COLUMN: Event Details */}
-            <div className="w-[400px] flex flex-col gap-4 overflow-y-auto pr-2">
+            <div className="w-full md:w-[400px] flex flex-col gap-4 md:overflow-y-auto pr-0 md:pr-2">
                 <Card className="h-full border-none shadow-none bg-transparent">
                     <CardContent className="p-0 space-y-6">
 
@@ -319,6 +325,44 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                             </div>
                         </div>
 
+                        {/* Transport (Optional) */}
+                        <div className="space-y-2">
+                            <Label>Transporte (Opcional)</Label>
+                            <div className="relative">
+                                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="0"
+                                    className="pl-9"
+                                    value={transport ? parseInt(transport).toLocaleString('es-MX') : ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '')
+                                        setTransport(val)
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Discount (Percentage) */}
+                        <div className="space-y-2">
+                            <Label>Descuento (%)</Label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-muted-foreground font-medium">%</span>
+                                <Input
+                                    type="text"
+                                    placeholder="0"
+                                    className="pl-9"
+                                    value={discount}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '')
+                                        if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 100)) {
+                                            setDiscount(val)
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+
                         {/* Preview Section - Only for ADMIN */}
                         {role === 'ADMIN' && cartItems.length > 0 && (
                             <Card className="border-primary/20">
@@ -349,6 +393,18 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                                             <span>Subtotal</span>
                                             <span>${grandTotal.toLocaleString()}</span>
                                         </div>
+                                        {transport && (
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span>Transporte</span>
+                                                <span>+${parseInt(transport).toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        {discount && (
+                                            <div className="flex justify-between items-center text-sm text-blue-600 font-medium">
+                                                <span>Descuento ({discount}%)</span>
+                                                <span>-${((grandTotal + (transport ? parseInt(transport) : 0)) * (parseInt(discount) / 100)).toLocaleString()}</span>
+                                            </div>
+                                        )}
                                         {deposit && (
                                             <div className="flex justify-between items-center text-sm text-green-600 font-medium">
                                                 <span>Depósito</span>
@@ -357,7 +413,14 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                                         )}
                                         <div className="flex justify-between items-center pt-2 font-bold text-lg text-primary">
                                             <span>Total a Pagar</span>
-                                            <span>${(grandTotal - (deposit ? parseInt(deposit) : 0)).toLocaleString()}</span>
+                                            <span>
+                                                {(() => {
+                                                    const subWithTrans = grandTotal + (transport ? parseInt(transport) : 0);
+                                                    const withDiscount = subWithTrans * (1 - (discount ? parseInt(discount) : 0) / 100);
+                                                    const finalTotal = withDiscount - (deposit ? parseInt(deposit) : 0);
+                                                    return Math.max(0, finalTotal).toLocaleString();
+                                                })()}
+                                            </span>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -394,7 +457,7 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
             </div>
 
             {/* RIGHT COLUMN: Product Grid */}
-            <div className="flex-1 flex flex-col gap-4 h-full bg-card/50 rounded-xl border p-4">
+            <div className="flex-1 flex flex-col gap-4 h-full bg-card/50 rounded-xl border p-4 min-h-[500px] md:min-h-0">
                 {/* Search */}
                 <div className="space-y-4">
                     <div className="relative">
@@ -407,13 +470,13 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                         />
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         {isFetchingAvailability && <div className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Actualizando disponibilidad...</div>}
 
                         {selectedCount > 0 && (
-                            <div className="flex items-center justify-between bg-accent/50 p-2 rounded-lg text-sm text-foreground font-medium ml-auto">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-accent/50 p-2 rounded-lg text-sm text-foreground font-medium w-full sm:w-auto sm:ml-auto gap-1 sm:gap-4">
                                 <span className="flex items-center gap-2"><ShoppingCart className="h-4 w-4" /> {selectedCount} productos</span>
-                                <span className="ml-4">Total unidades: {totalItems}</span>
+                                <span className="sm:ml-4">Total unidades: {totalItems}</span>
                             </div>
                         )}
                     </div>

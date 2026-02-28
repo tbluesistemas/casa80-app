@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CalendarDays, Package, RotateCcw, BarChart3, TrendingUp, DollarSign, AlertTriangle, Users, UserCheck, Award, Activity } from "lucide-react"
@@ -41,6 +41,12 @@ interface DashboardStatsProps {
 export function DashboardStats({ data }: DashboardStatsProps) {
     const [showChart, setShowChart] = useState<'events' | 'revenue'>('events')
     const [showProductView, setShowProductView] = useState<'categories' | 'rented' | 'damaged'>('categories')
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        const timer = setTimeout(() => setIsMounted(true), 150)
+        return () => clearTimeout(timer)
+    }, [])
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)
@@ -49,7 +55,7 @@ export function DashboardStats({ data }: DashboardStatsProps) {
     return (
         <div className="space-y-6">
             {/* Main Stats Row */}
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <Link href="/events" className="block text-inherit no-underline">
                     <Card className="hover:bg-muted/50 transition-colors h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -244,77 +250,81 @@ export function DashboardStats({ data }: DashboardStatsProps) {
                         </Button>
                     </CardHeader>
                     <CardContent>
-                        <div className="w-full h-[300px] overflow-x-auto flex justify-center items-center">
-                            {showChart === 'events' ? (
-                                <BarChart width={500} height={250} data={data.monthlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                                    <XAxis
-                                        dataKey="name"
-                                        stroke="var(--muted-foreground)"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        dy={10}
-                                    />
-                                    <YAxis
-                                        stroke="var(--muted-foreground)"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                    />
-                                    <Tooltip
-                                        cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
-                                        contentStyle={{
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--border)',
-                                            backgroundColor: 'var(--background)',
-                                            color: 'var(--foreground)'
-                                        }}
-                                    />
-                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                        {data.monthlyStats.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
+                        <div className="w-full h-[300px]">
+                            {isMounted && (showChart === 'events' ? (
+                                <ResponsiveContainer width="99%" height={300} minWidth={0} minHeight={0}>
+                                    <BarChart data={data.monthlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                                        <XAxis
+                                            dataKey="name"
+                                            stroke="var(--muted-foreground)"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            dy={10}
+                                        />
+                                        <YAxis
+                                            stroke="var(--muted-foreground)"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
+                                            contentStyle={{
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border)',
+                                                backgroundColor: 'var(--background)',
+                                                color: 'var(--foreground)'
+                                            }}
+                                        />
+                                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                            {data.monthlyStats.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
                             ) : (
-                                <LineChart width={500} height={250} data={data.monthlyRevenue || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                                    <XAxis
-                                        dataKey="name"
-                                        stroke="var(--muted-foreground)"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        dy={10}
-                                    />
-                                    <YAxis
-                                        stroke="var(--muted-foreground)"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                                    />
-                                    <Tooltip
-                                        cursor={{ stroke: 'var(--muted)', strokeWidth: 1 }}
-                                        contentStyle={{
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--border)',
-                                            backgroundColor: 'var(--background)',
-                                            color: 'var(--foreground)'
-                                        }}
-                                        formatter={(value: any) => formatCurrency(value)}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="value"
-                                        stroke="var(--chart-1)"
-                                        strokeWidth={2}
-                                        dot={{ fill: 'var(--chart-1)', r: 4 }}
-                                        activeDot={{ r: 6 }}
-                                    />
-                                </LineChart>
-                            )}
+                                <ResponsiveContainer width="99%" height={300} minWidth={0} minHeight={0}>
+                                    <LineChart data={data.monthlyRevenue || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                                        <XAxis
+                                            dataKey="name"
+                                            stroke="var(--muted-foreground)"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            dy={10}
+                                        />
+                                        <YAxis
+                                            stroke="var(--muted-foreground)"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                                        />
+                                        <Tooltip
+                                            cursor={{ stroke: 'var(--muted)', strokeWidth: 1 }}
+                                            contentStyle={{
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border)',
+                                                backgroundColor: 'var(--background)',
+                                                color: 'var(--foreground)'
+                                            }}
+                                            formatter={(value: any) => formatCurrency(value)}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="value"
+                                            stroke="var(--chart-1)"
+                                            strokeWidth={2}
+                                            dot={{ fill: 'var(--chart-1)', r: 4 }}
+                                            activeDot={{ r: 6 }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
