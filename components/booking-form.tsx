@@ -230,9 +230,9 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
     }, [cartItems])
 
     return (
-        <div className="flex flex-col md:flex-row md:h-[calc(100vh-140px)] gap-6">
+        <div className="flex flex-col md:flex-row md:h-[calc(100vh-140px)] gap-4 md:gap-6">
             {/* LEFT COLUMN: Event Details */}
-            <div className="w-full md:w-[400px] flex flex-col gap-4 md:overflow-y-auto pr-0 md:pr-2">
+            <div className="w-full md:w-[380px] lg:w-[400px] flex flex-col gap-4 md:overflow-y-auto pr-0 md:pr-2 md:shrink-0">
                 <Card className="h-full border-none shadow-none bg-transparent">
                     <CardContent className="p-0 space-y-6">
 
@@ -457,7 +457,7 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
             </div>
 
             {/* RIGHT COLUMN: Product Grid */}
-            <div className="flex-1 flex flex-col gap-4 h-full bg-card/50 rounded-xl border p-4 min-h-[500px] md:min-h-0">
+            <div className="flex-1 flex flex-col gap-4 bg-card/50 rounded-xl border p-3 sm:p-4 min-h-[400px] md:min-h-0 md:overflow-hidden">
                 {/* Search */}
                 <div className="space-y-4">
                     <div className="relative">
@@ -483,13 +483,13 @@ export function BookingForm({ products: initialProducts }: { products: Product[]
                 </div>
 
                 {/* Grid */}
-                <div className="flex-1 overflow-y-auto pr-2 pb-20">
+                <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 pb-4 md:pb-6">
                     {filteredProducts.length === 0 ? (
                         <div className="flex h-full items-center justify-center text-muted-foreground">
                             No se encontraron productos
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                             {filteredProducts.map(product => (
                                 <ProductCard
                                     key={product.id}
