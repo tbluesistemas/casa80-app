@@ -115,59 +115,59 @@ export function DashboardStats({ data }: DashboardStatsProps) {
             </div>
 
             {/* Revenue Stats Row */}
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 <Card className="hover:bg-muted/50 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
-                        <DollarSign className="h-4 w-4 text-green-600" />
+                        <CardTitle className="text-xs sm:text-sm font-medium">Ingresos Totales</CardTitle>
+                        <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 shrink-0" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-base sm:text-xl md:text-2xl font-bold text-green-600 tabular-nums break-all">
                             {formatCurrency(data.totalRevenue || 0)}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                             De eventos completados
                         </p>
                     </CardContent>
                 </Card>
                 <Card className="hover:bg-muted/50 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total de Daños</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <CardTitle className="text-xs sm:text-sm font-medium">Total de Daños</CardTitle>
+                        <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 shrink-0" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-600">
+                        <div className="text-base sm:text-xl md:text-2xl font-bold text-red-600 tabular-nums break-all">
                             {formatCurrency(data.totalDamageCost || 0)}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                             Costo de productos dañados pendientes
                         </p>
                     </CardContent>
                 </Card>
                 <Card className="hover:bg-muted/50 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Ingresos Proyectados</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-blue-600" />
+                        <CardTitle className="text-xs sm:text-sm font-medium">Ingresos Proyectados</CardTitle>
+                        <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 shrink-0" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-blue-600">
+                        <div className="text-base sm:text-xl md:text-2xl font-bold text-blue-600 tabular-nums break-all">
                             {formatCurrency(data.projectedRevenue || 0)}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                             De eventos activos/reservados
                         </p>
                     </CardContent>
                 </Card>
                 <Card className="hover:bg-muted/50 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Valor Promedio</CardTitle>
-                        <BarChart3 className="h-4 w-4 text-purple-600" />
+                        <CardTitle className="text-xs sm:text-sm font-medium">Valor Promedio</CardTitle>
+                        <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600 shrink-0" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-purple-600">
+                        <div className="text-base sm:text-xl md:text-2xl font-bold text-purple-600 tabular-nums break-all">
                             {formatCurrency(data.averageEventValue || 0)}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                             Por evento completado
                         </p>
                     </CardContent>
@@ -175,7 +175,7 @@ export function DashboardStats({ data }: DashboardStatsProps) {
             </div>
 
             {/* Client & Utilization Stats Row */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="hover:bg-muted/50 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>

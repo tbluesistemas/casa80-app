@@ -3,6 +3,17 @@
 
 @import "./theme.css";
 
+/* =============================
+   RESPONSIVE BASE - MOBILE FIRST
+   ============================= */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -45,6 +56,17 @@
 
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+
+  /* Tables scroll horizontally on small screens */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent images from overflowing their containers */
+  img {
+    max-width: 100%;
   }
 
   /* Global hover highlight for parent containers only */
