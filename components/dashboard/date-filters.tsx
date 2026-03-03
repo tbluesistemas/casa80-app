@@ -69,8 +69,8 @@ export function DateFilters({
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-wrap items-end gap-3">
-                    <div className="flex-1 min-w-[150px]">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-2 sm:gap-3">
+                    <div className="sm:flex-1 sm:min-w-[150px]">
                         <label className="text-sm font-medium mb-2 block">Año</label>
                         <Select
                             value={selectedYear?.toString() || "all"}
@@ -91,7 +91,7 @@ export function DateFilters({
                         </Select>
                     </div>
 
-                    <div className="flex-1 min-w-[150px]">
+                    <div className="sm:flex-1 sm:min-w-[150px]">
                         <label className="text-sm font-medium mb-2 block">Mes</label>
                         <Select
                             value={selectedMonth?.toString() || "all"}
@@ -115,7 +115,7 @@ export function DateFilters({
                     <Button
                         onClick={onApply}
                         disabled={isLoading || !hasFilters}
-                        className="gap-2"
+                        className="gap-2 col-span-2 sm:col-span-1 w-full sm:w-auto"
                     >
                         {isLoading ? (
                             <>

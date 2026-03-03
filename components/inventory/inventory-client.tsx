@@ -151,18 +151,20 @@ export function InventoryClient({ products }: { products: Product[] }) {
     }
 
     return (
-        <div className="flex-1 space-y-4 md:space-y-8 p-4 md:p-8 pt-4 md:pt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Inventario</h2>
-                <div className="flex items-center gap-4">
+        <div className="flex-1 space-y-4 md:space-y-6 p-3 sm:p-4 md:p-8 pt-3 sm:pt-4 md:pt-6">
+            <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Inventario</h2>
                     {role === 'ADMIN' && (
                         <TotalValueCard totalValue={totalInventoryValue} />
                     )}
-                    <div className="flex gap-2 bg-muted/50 p-1 rounded-lg w-fit h-fit">
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex gap-1 sm:gap-2 bg-muted/50 p-1 rounded-lg flex-wrap">
                         <Link href="/inventory/damages">
-                            <Button variant="ghost" size="sm" className="gap-2">
-                                <AlertTriangle className="h-4 w-4" />
-                                <span className="hidden sm:inline">Historial de Daños</span>
+                            <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3">
+                                <AlertTriangle className="h-4 w-4 shrink-0" />
+                                <span className="hidden xs:inline text-xs sm:text-sm">Daños</span>
                             </Button>
                         </Link>
                         {role === 'ADMIN' && <CreateProductDialog />}

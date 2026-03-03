@@ -23,25 +23,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex min-h-screen bg-background flex-col md:flex-row">
+        <div className="flex h-screen bg-background flex-col md:flex-row overflow-hidden">
             {/* Mobile Header */}
-            <header className="md:hidden flex items-center h-16 border-b px-4 gap-4 sticky top-0 bg-background z-40">
+            <header className="md:hidden flex items-center h-14 sm:h-16 border-b px-3 sm:px-4 gap-3 sm:gap-4 shrink-0 bg-background z-40">
                 <Sheet open={open} onOpenChange={setOpen}>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="-ml-2">
-                            <Menu className="h-6 w-6" />
+                        <Button variant="ghost" size="icon" className="-ml-1">
+                            <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
                             <span className="sr-only">Menu</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 w-64">
+                    <SheetContent side="left" className="p-0 w-[280px] sm:w-64">
                         <Sidebar onLinkClick={() => setOpen(false)} className="border-none w-full shadow-none" />
                     </SheetContent>
                 </Sheet>
-                <div className="flex items-center gap-2">
-                    <img src="/logo.png" alt="Casa80 Logo" className="h-10 w-auto object-contain" />
-                    <div className="flex flex-col">
-                        <div className="font-bold text-base leading-none">Casa80</div>
-                        <div className="text-[7px] text-muted-foreground font-medium uppercase tracking-tight">
+                <div className="flex items-center gap-2 min-w-0">
+                    <img src="/logo.png" alt="Casa80 Logo" className="h-8 sm:h-10 w-auto object-contain shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                        <div className="font-bold text-sm sm:text-base leading-none">Casa80</div>
+                        <div className="text-[7px] text-muted-foreground font-medium uppercase tracking-tight truncate">
                             El ALIADO perfecto para tus eventos!
                         </div>
                     </div>
@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto bg-background md:pl-64">
+            <main className="flex-1 overflow-y-auto bg-background md:pl-64 min-w-0">
                 {children}
             </main>
         </div>
