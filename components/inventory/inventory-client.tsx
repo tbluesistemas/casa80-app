@@ -23,6 +23,7 @@ import { CreateProductDialog } from "@/components/inventory/create-product-dialo
 import { DeleteProductDialog } from "@/components/inventory/delete-product-dialog"
 import { deleteProduct } from "@/lib/actions"
 import { format } from "date-fns"
+import { cn, formatCurrency } from "@/lib/utils"
 import { Search, Eye, EyeOff, DollarSign, AlertTriangle, Trash2, X, ArrowUpDown } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -303,8 +304,8 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                     </div>
                                 </div>
                                 <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>Unit: <strong className="text-foreground">${(product.priceUnit || 0).toLocaleString()}</strong></span>
-                                    <span>Daño: <strong className="text-foreground">${product.priceReplacement.toLocaleString()}</strong></span>
+                                    <span>Unit: <strong className="text-foreground">{formatCurrency(product.priceUnit || 0)}</strong></span>
+                                    <span>Daño: <strong className="text-foreground">{formatCurrency(product.priceReplacement)}</strong></span>
                                 </div>
                             </div>
                         ))}
@@ -421,10 +422,10 @@ export function InventoryClient({ products }: { products: Product[] }) {
                                                     {product.quantityDamaged || 0}
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium">
-                                                    ${(product.priceUnit || 0).toFixed(0)}
+                                                    {formatCurrency(product.priceUnit || 0)}
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium">
-                                                    ${product.priceReplacement.toFixed(0)}
+                                                    {formatCurrency(product.priceReplacement)}
                                                 </TableCell>
                                                 <TableCell className="text-right text-muted-foreground text-xs">
                                                     {format(new Date(product.updatedAt), "dd/MM/yyyy HH:mm")}
@@ -494,7 +495,7 @@ function TotalValueCard({ totalValue }: { totalValue: number }) {
                     <div className="flex items-center gap-2">
                         <span className="font-bold text-lg tabular-nums">
                             {showValue
-                                ? `$${totalValue.toLocaleString()}`
+                                ? formatCurrency(totalValue)
                                 : "•••••••"}
                         </span>
                         <button
